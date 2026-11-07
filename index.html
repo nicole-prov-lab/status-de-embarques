@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Status de embarques</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c1624; --surface:#122033; --surface-2:#182a42; --line:#223752;
+  --text:#e7eef8; --muted:#8fa3bd; --accent:#38d0f0; --accent-ink:#06202a;
+  --ok:#3ecf8e; --info:#5aa8ff; --warn:#f5b73d; --bad:#ff6b6b; --neutral:#8fa3bd;
+  --radius:10px;
+  --font-head:"Space Grotesk",system-ui,sans-serif;
+  --font-body:"IBM Plex Sans",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+:root[data-theme="light"]{
+  --bg:#f2f5f9; --surface:#ffffff; --surface-2:#eaf0f7; --line:#d5dfeb;
+  --text:#0f1d2e; --muted:#566a84; --accent:#0a7ea4; --accent-ink:#ffffff;
+  --ok:#14804f; --info:#1f6fd6; --warn:#a66a00; --bad:#c93a3a; --neutral:#566a84;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font-body);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:1280px;margin:0 auto;padding:28px 20px 64px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+h1{font:700 30px/1.1 var(--font-head);margin:0;letter-spacing:-.02em}
+.sub{color:var(--muted);margin-top:6px;font-size:14px}
+.tools{display:flex;gap:8px;align-items:center}
+.btn{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:8px;
+  padding:8px 12px;font:500 13px var(--font-body);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.live{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.dot.loading{background:var(--warn);animation:pulse 1s infinite}
+.dot.error{background:var(--bad)}
+@keyframes pulse{50%{opacity:.3}}
+
+/* Barra de pipeline: el elemento principal */
+.pipeline{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 14px;margin-bottom:18px}
+.pipe-top{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.pipe-total{font:700 40px/1 var(--font-head);letter-spacing:-.03em}
+.pipe-label{color:var(--muted)}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface-2);gap:2px}
+.seg{border:0;padding:0;cursor:pointer;min-width:6px;transition:flex-grow .35s ease,opacity .2s}
+.seg:hover{opacity:.8}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:transparent;color:var(--text);
+  border-radius:999px;padding:5px 12px 5px 10px;font:500 13px var(--font-body);cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--surface-2);border-color:var(--accent)}
+.chip i{width:9px;height:9px;border-radius:50%;display:block}
+.chip b{font-family:var(--font-head);font-weight:600}
+
+.filters{display:grid;grid-template-columns:1fr 200px 200px auto;gap:10px;margin-bottom:12px}
+input,select{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:8px;
+  padding:10px 12px;font:400 14px var(--font-body);width:100%}
+input::placeholder{color:var(--muted)}
+.count{color:var(--muted);font-size:13px;margin:0 2px 8px}
+
+.table-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:860px}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font:600 13px var(--font-head);color:var(--muted);background:var(--surface);position:sticky;top:0;cursor:pointer;user-select:none}
+th:hover{color:var(--text)}
+th .arr{color:var(--accent);margin-left:4px}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:0}
+td.num{font-family:var(--font-mono);font-size:13px}
+td.client{white-space:normal;min-width:180px;font-weight:500}
+.badge{display:inline-flex;align-items:center;gap:7px;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:500;
+  background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
+.badge i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+.empty{padding:48px 20px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--text);font:600 17px var(--font-head);margin-bottom:6px}
+
+/* Panel de detalle */
+.scrim{position:fixed;inset:0;background:rgba(5,10,18,.55);opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--line);
+  transform:translateX(100%);transition:transform .25s ease;overflow-y:auto;padding:22px;
+  padding-top:calc(22px + env(safe-area-inset-top,0px));padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+.drawer.on{transform:none}
+.d-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
+.d-head h2{font:700 22px/1.2 var(--font-head);margin:0}
+.d-head small{color:var(--muted);font-family:var(--font-mono)}
+dl{margin:0;display:grid;gap:14px}
+dt{color:var(--muted);font-size:13px}
+dd{margin:2px 0 0;word-break:break-word}
+dd.mono{font-family:var(--font-mono)}
+dd a{color:var(--accent)}
+.copy{margin-left:8px;font-size:12px;padding:2px 8px}
+
+.error-box{background:color-mix(in srgb,var(--bad) 12%,transparent);border:1px solid var(--bad);border-radius:var(--radius);
+  padding:14px 16px;margin-bottom:16px;display:none}
+.error-box.on{display:block}
+
+@media (max-width:760px){
+  .filters{grid-template-columns:1fr 1fr}
+  .filters input{grid-column:1/-1}
+  h1{font-size:25px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1 id="title">Status de embarques</h1>
+    <div class="sub" id="sub">Cargando datos…</div>
+  </div>
+  <div class="tools">
+    <span class="live"><span class="dot loading" id="dot"></span><span id="liveText">Conectando</span></span>
+    <button class="btn" id="refresh">Actualizar</button>
+    <button class="btn" id="theme" aria-label="Cambiar tema">Tema</button>
+  </div>
+</header>
+
+<div class="error-box" id="err"></div>
+
+<section class="pipeline" aria-label="Resumen por status">
+  <div class="pipe-top"><span class="pipe-total" id="total">0</span><span class="pipe-label">pedidos en seguimiento</span></div>
+  <div class="bar" id="bar"></div>
+  <div class="legend" id="legend"></div>
+</section>
+
+<div class="filters">
+  <input id="q" type="search" placeholder="Buscar por cliente, orden, guía, nota…" aria-label="Buscar">
+  <select id="fStatus" aria-label="Filtrar por status"><option value="">Todos los status</option></select>
+  <select id="fAgent" aria-label="Filtrar por agente"><option value="">Todos los agentes</option></select>
+  <button class="btn" id="clear">Limpiar filtros</button>
+</div>
+<p class="count" id="count"></p>
+
+<div class="table-box">
+  <table>
+    <thead><tr id="thead"></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div class="empty" id="empty" hidden><strong>Sin resultados</strong>Cambia la búsqueda o limpia los filtros para ver más pedidos.</div>
+</div>
+
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Detalle del pedido">
+  <div class="d-head"><div><h2 id="dTitle"></h2><small id="dOrder"></small></div><button class="btn" id="dClose">Cerrar</button></div>
+  <dl id="dBody"></dl>
+</aside>
+
+<script>
+/* ============================================================
+   CONFIGURACIÓN: solo cambia esto
+   ============================================================ */
+const CONFIG = {
+  // Pega aquí el link de tu Google Sheets (el de la barra del navegador, o el de "Publicar en la web" en CSV)
+  SHEET_URL: "PEGA_AQUI_TU_LINK_DE_GOOGLE_SHEETS",
+  TITLE: "Status de embarques",
+  REFRESH_MINUTES: 5,     // se actualiza solo cada X minutos (0 = desactivado)
+};
+/* ============================================================ */
+
+// Las columnas se leen por POSICIÓN (A a K), no por el nombre del encabezado.
+const COLS = [
+  {k:"fechaPedido",     label:"Fecha de pedido"},
+  {k:"pedidoComercial", label:"Pedido en comercial"},
+  {k:"agente",          label:"Agente de venta"},
+  {k:"orden",           label:"Número de orden"},
+  {k:"cliente",         label:"Cliente"},
+  {k:"status",          label:"Status"},
+  {k:"fechaEmbarque",   label:"Fecha de embarque"},
+  {k:"guia",            label:"Número de guía"},
+  {k:"nota",            label:"Nota"},
+  {k:"email",           label:"Email de contacto"},
+  {k:"actualizacion",   label:"Actualización"},
+];
+// Columnas visibles en la tabla (el resto se ve al abrir el pedido)
+const TABLE_COLS = ["orden","cliente","agente","status","fechaEmbarque","guia","actualizacion"];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let rows = [], sort = {k:"fechaPedido", dir:-1}, timer = null;
+
+/* ---------- Link de Google Sheets -> URL CSV ---------- */
+function csvUrl(link){
+  if(!link || link.includes("PEGA_AQUI")) return null;
+  if(/output=csv/.test(link) || /\/pub\?/.test(link)) return link.includes("output=csv") ? link : link + (link.includes("?")?"&":"?") + "output=csv";
+  const id = (link.match(/\/d\/([a-zA-Z0-9_-]+)/) || [])[1];
+  if(!id) return null;
+  const gid = (link.match(/[#&?]gid=(\d+)/) || [])[1] || "0";
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`;
+}
+
+/* ---------- Parser CSV (maneja comillas y saltos de línea) ---------- */
+function parseCSV(text){
+  const out=[]; let row=[], f="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){f+='"';i++} else q=false }
+      else f+=c;
+    } else if(c==='"') q=true;
+    else if(c===','){ row.push(f); f="" }
+    else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n')i++; row.push(f); out.push(row); row=[]; f="" }
+    else f+=c;
+  }
+  if(f!==""||row.length){ row.push(f); out.push(row) }
+  return out;
+}
+
+/* ---------- Carga ---------- */
+async function load(){
+  setState("loading","Actualizando");
+  const url = csvUrl(CONFIG.SHEET_URL);
+  if(!url){ showError("Falta el link de la hoja","Abre <code>index.html</code> y pega tu link de Google Sheets en <code>CONFIG.SHEET_URL</code>."); return setState("error","Sin configurar") }
+  try{
+    const res = await fetch(url, {cache:"no-store"});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const text = await res.text();
+    if(text.trim().startsWith("<")) throw new Error("La hoja no es pública");
+    const data = parseCSV(text).slice(1)           // quita encabezados
+      .filter(r => r.some(c => c.trim()!==""))
+      .map(r => Object.fromEntries(COLS.map((c,i)=>[c.k,(r[i]||"").trim()])));
+    rows = data;
+    $("err").classList.remove("on");
+    buildFilters(); render();
+    const t = new Date().toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"});
+    $("sub").textContent = `Última lectura de la hoja a las ${t}`;
+    setState("ok","En vivo");
+  }catch(e){
+    showError("No se pudo leer la hoja",
+      "Revisa que la hoja esté compartida como <strong>“Cualquier persona con el enlace” (lector)</strong> o publicada en la web. Detalle: "+esc(e.message));
+    setState("error","Error de conexión");
+  }
+}
+function setState(s,t){ $("dot").className="dot "+(s==="ok"?"":s); $("liveText").textContent=t }
+function showError(title,html){ const e=$("err"); e.innerHTML=`<strong>${title}</strong><br>${html}`; e.classList.add("on") }
+
+/* ---------- Colores de status ---------- */
+const STATUS_RULES = [
+  [/entreg|recib|complet|cerrad/i, "--ok"],
+  [/tr[aá]nsito|embarc|enviad|ruta|despach|aduana/i, "--info"],
+  [/pendient|producci|prepar|espera|program|proceso|document/i, "--warn"],
+  [/retras|cancel|problem|detenid|incidenc|rechaz/i, "--bad"],
+];
+function statusVar(s){ for(const [re,v] of STATUS_RULES) if(re.test(s)) return v; return "--neutral" }
+function badge(s){ return s ? `<span class="badge" style="--c:var(${statusVar(s)})"><i></i>${esc(s)}</span>` : `<span style="color:var(--muted)">—</span>` }
+
+/* ---------- Fechas ---------- */
+function toTime(s){
+  if(!s) return 0;
+  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if(m){ let y=+m[3]; if(y<100) y+=2000; return new Date(y,+m[2]-1,+m[1]).getTime() }
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return new Date(+m[1],+m[2]-1,+m[3]).getTime();
+  const t = Date.parse(s); return isNaN(t)?0:t;
+}
+const DATE_KEYS = ["fechaPedido","fechaEmbarque","actualizacion"];
+
+/* ---------- Filtros y render ---------- */
+const state = {q:"", status:"", agent:""};
+function buildFilters(){
+  const fill=(el,key,first)=>{
+    const cur=el.value; const vals=[...new Set(rows.map(r=>r[key]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+    el.innerHTML=`<option value="">${first}</option>`+vals.map(v=>`<option>${esc(v)}</option>`).join("");
+    el.value=vals.includes(cur)?cur:"";
+  };
+  fill($("fStatus"),"status","Todos los status"); fill($("fAgent"),"agente","Todos los agentes");
+  state.status=$("fStatus").value; state.agent=$("fAgent").value;
+}
+function filtered(){
+  const q=state.q.toLowerCase();
+  let list=rows.filter(r=>
+    (!state.status||r.status===state.status) && (!state.agent||r.agente===state.agent) &&
+    (!q||Object.values(r).some(v=>v.toLowerCase().includes(q))));
+  const {k,dir}=sort;
+  list.sort((a,b)=> DATE_KEYS.includes(k) ? (toTime(a[k])-toTime(b[k]))*dir
+                    : a[k].localeCompare(b[k],"es",{numeric:true})*dir);
+  return list;
+}
+function renderSummary(){
+  const counts={}; rows.forEach(r=>{const s=r.status||"Sin status"; counts[s]=(counts[s]||0)+1});
+  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  $("total").textContent=rows.length;
+  $("bar").innerHTML=entries.map(([s,n])=>
+    `<button class="seg" title="${esc(s)}: ${n}" aria-label="${esc(s)}: ${n}" data-s="${esc(s)}" style="flex:${n} 1 0;background:var(${statusVar(s)})"></button>`).join("");
+  $("legend").innerHTML=entries.map(([s,n])=>
+    `<button class="chip" data-s="${esc(s)}" aria-pressed="${state.status===s}"><i style="background:var(${statusVar(s)})"></i>${esc(s)} <b>${n}</b></button>`).join("");
+}
+function render(){
+  renderSummary();
+  $("thead").innerHTML=TABLE_COLS.map(k=>{
+    const c=COLS.find(c=>c.k===k);
+    return `<th data-k="${k}">${c.label}${sort.k===k?`<span class="arr">${sort.dir>0?"↑":"↓"}</span>`:""}</th>`}).join("");
+  const list=filtered();
+  $("count").textContent=`${list.length} de ${rows.length} pedidos`;
+  $("empty").hidden=list.length>0;
+  $("tbody").innerHTML=list.map(r=>{
+    const i=rows.indexOf(r);
+    return `<tr data-i="${i}" tabindex="0">`+TABLE_COLS.map(k=>{
+      if(k==="status") return `<td>${badge(r.status)}</td>`;
+      if(k==="orden"||k==="guia") return `<td class="num">${esc(r[k])||"—"}</td>`;
+      if(k==="cliente") return `<td class="client">${esc(r[k])}</td>`;
+      return `<td>${esc(r[k])||"—"}</td>`;
+    }).join("")+`</tr>`}).join("");
+}
+function setStatus(s){ state.status = state.status===s ? "" : s; $("fStatus").value=state.status; render() }
+
+/* ---------- Detalle ---------- */
+function openDrawer(i){
+  const r=rows[i]; if(!r) return;
+  $("dTitle").textContent=r.cliente||"Pedido"; $("dOrder").textContent=r.orden?("Orden "+r.orden):"";
+  $("dBody").innerHTML=`<div><dt>Status</dt><dd>${badge(r.status)}</dd></div>`+
+    COLS.filter(c=>!["cliente","orden","status"].includes(c.k)).map(c=>{
+      const v=r[c.k]; let inner=v?esc(v):`<span style="color:var(--muted)">—</span>`;
+      if(c.k==="email"&&v) inner=`<a href="mailto:${esc(v)}">${esc(v)}</a>`;
+      if(c.k==="guia"&&v) inner=`${esc(v)}<button class="btn copy" data-copy="${esc(v)}">Copiar</button>`;
+      return `<div><dt>${c.label}</dt><dd class="${c.k==="guia"?"mono":""}">${inner}</dd></div>`}).join("");
+  $("drawer").classList.add("on"); $("scrim").classList.add("on"); $("drawer").setAttribute("aria-hidden","false");
+  $("dClose").focus();
+}
+function closeDrawer(){ $("drawer").classList.remove("on"); $("scrim").classList.remove("on"); $("drawer").setAttribute("aria-hidden","true") }
+
+/* ---------- Eventos ---------- */
+$("q").addEventListener("input",e=>{state.q=e.target.value;render()});
+$("fStatus").addEventListener("change",e=>{state.status=e.target.value;render()});
+$("fAgent").addEventListener("change",e=>{state.agent=e.target.value;render()});
+$("clear").addEventListener("click",()=>{state={...state,q:"",status:"",agent:""};$("q").value="";$("fStatus").value="";$("fAgent").value="";render()});
+$("refresh").addEventListener("click",load);
+$("bar").addEventListener("click",e=>{const b=e.target.closest("[data-s]"); if(b) setStatus(b.dataset.s)});
+$("legend").addEventListener("click",e=>{const b=e.target.closest("[data-s]"); if(b) setStatus(b.dataset.s)});
+$("thead").addEventListener("click",e=>{
+  const th=e.target.closest("th"); if(!th) return;
+  sort = sort.k===th.dataset.k ? {k:sort.k,dir:-sort.dir} : {k:th.dataset.k,dir:1}; render();
+});
+$("tbody").addEventListener("click",e=>{const tr=e.target.closest("tr"); if(tr) openDrawer(+tr.dataset.i)});
+$("tbody").addEventListener("keydown",e=>{ if(e.key==="Enter"){const tr=e.target.closest("tr"); if(tr) openDrawer(+tr.dataset.i)} });
+$("dClose").addEventListener("click",closeDrawer); $("scrim").addEventListener("click",closeDrawer);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeDrawer() });
+$("dBody").addEventListener("click",e=>{
+  const b=e.target.closest("[data-copy]"); if(!b) return;
+  navigator.clipboard?.writeText(b.dataset.copy).then(()=>{b.textContent="Copiado"; setTimeout(()=>b.textContent="Copiar",1500)});
+});
+
+/* Tema claro/oscuro (se recuerda en el navegador) */
+function applyTheme(t){ document.documentElement.dataset.theme=t }
+let saved=null; try{ saved=localStorage.getItem("theme") }catch(e){}
+applyTheme(saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
+$("theme").addEventListener("click",()=>{
+  const t=document.documentElement.dataset.theme==="light"?"dark":"light"; applyTheme(t);
+  try{ localStorage.setItem("theme",t) }catch(e){}
+});
+
+/* Inicio */
+document.title=CONFIG.TITLE; $("title").textContent=CONFIG.TITLE;
+load();
+if(CONFIG.REFRESH_MINUTES>0) timer=setInterval(load, CONFIG.REFRESH_MINUTES*60000);
+</script>
+</body>
+</html>
