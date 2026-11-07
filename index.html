@@ -65,7 +65,7 @@ input::placeholder{color:var(--muted)}
 .count{color:var(--muted);font-size:13px;margin:0 2px 8px}
 
 .table-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:1500px}
+table{width:100%;border-collapse:collapse;min-width:1100px}
 th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
 th{font:600 13px var(--font-head);color:var(--muted);background:var(--surface);position:sticky;top:0;cursor:pointer;user-select:none}
 th:hover{color:var(--text)}
@@ -168,7 +168,7 @@ const CONFIG = {
   // Nombre exacto de la pestaña (tal como aparece abajo en Google Sheets). Déjalo vacío ("") para usar la pestaña del link.
   SHEET_TAB: "TABLA DE EMBARQUES",
   TITLE: "Status de embarques",
-  REFRESH_MINUTES: 2,     // se actualiza solo cada X minutos (0 = desactivado)
+  REFRESH_MINUTES: 5,     // se actualiza solo cada X minutos (0 = desactivado)
 };
 /* ============================================================ */
 
@@ -186,8 +186,9 @@ const COLS = [
   {k:"email",           label:"E-mail de contacto"},
   {k:"actualizacion",   label:"Actualización"},
 ];
-// Tabla: las 11 columnas en el mismo orden que la hoja (A a K)
-const TABLE_COLS = COLS.map(c => c.k);
+// Columnas visibles en la tabla (mismo orden que la hoja). Las demás solo se ven en el panel al hacer clic en una fila.
+const HIDDEN_IN_TABLE = ["actualizacion","email","agente","pedidoComercial"];
+const TABLE_COLS = COLS.map(c => c.k).filter(k => !HIDDEN_IN_TABLE.includes(k));
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
