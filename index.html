@@ -65,7 +65,7 @@ input::placeholder{color:var(--muted)}
 .count{color:var(--muted);font-size:13px;margin:0 2px 8px}
 
 .table-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:860px}
+table{width:100%;border-collapse:collapse;min-width:1500px}
 th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
 th{font:600 13px var(--font-head);color:var(--muted);background:var(--surface);position:sticky;top:0;cursor:pointer;user-select:none}
 th:hover{color:var(--text)}
@@ -75,6 +75,7 @@ tbody tr:hover td{background:var(--surface-2)}
 tbody tr:last-child td{border-bottom:0}
 td.num{font-family:var(--font-mono);font-size:13px}
 td.client{white-space:normal;min-width:180px;font-weight:500}
+td.nota{white-space:normal;min-width:200px;max-width:320px}
 .badge{display:inline-flex;align-items:center;gap:7px;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:500;
   background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
 .badge i{width:7px;height:7px;border-radius:50%;background:var(--c)}
@@ -164,27 +165,30 @@ dd a{color:var(--accent)}
 const CONFIG = {
   // Pega aquí el link de tu Google Sheets (el de la barra del navegador, o el de "Publicar en la web" en CSV)
   SHEET_URL: "https://docs.google.com/spreadsheets/d/1D6f-Bx60XoICoilatq5N7Jkgg6NZVgJJnmrn5lGtkD4/edit?usp=sharing",
+  // Nombre exacto de la pestaña (tal como aparece abajo en Google Sheets). Déjalo vacío ("") para usar la pestaña del link.
+  SHEET_TAB: "TABLA DE EMBARQUES",
   TITLE: "Status de embarques",
-  REFRESH_MINUTES: 5,     // se actualiza solo cada X minutos (0 = desactivado)
+  REFRESH_MINUTES: 2,     // se actualiza solo cada X minutos (0 = desactivado)
 };
 /* ============================================================ */
 
 // Las columnas se leen por POSICIÓN (A a K), no por el nombre del encabezado.
 const COLS = [
-  {k:"fechaPedido",     label:"Fecha de pedido"},
-  {k:"pedidoComercial", label:"Pedido en comercial"},
-  {k:"agente",          label:"Agente de venta"},
-  {k:"orden",           label:"Número de orden"},
+  {k:"fechaPedido",     label:"Fecha de Pedido"},
+  {k:"pedidoComercial", label:"Pedido en Comercial"},
+  {k:"agente",          label:"Agente de Venta"},
+  {k:"orden",           label:"Número de Orden"},
   {k:"cliente",         label:"Cliente"},
   {k:"status",          label:"Status"},
-  {k:"fechaEmbarque",   label:"Fecha de embarque"},
-  {k:"guia",            label:"Número de guía"},
+  {k:"fechaEmbarque",   label:"Fecha de Embarque"},
+  {k:"guia",            label:"Número de Guía"},
   {k:"nota",            label:"Nota"},
-  {k:"email",           label:"Email de contacto"},
+  {k:"email",           label:"E-mail de contacto"},
   {k:"actualizacion",   label:"Actualización"},
 ];
-// Columnas visibles en la tabla (el resto se ve al abrir el pedido)
-const TABLE_COLS = ["fechaPedido","pedidoComercial","agente","orden","cliente","status","fechaEmbarque","guia","nota","email","actualizacion"];
+// Tabla: las 11 columnas en el mismo orden que la hoja (A a K)
+const TABLE_COLS = COLS.map(c => c.k);
+
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let rows = [], sort = {k:"fechaPedido", dir:-1}, timer = null;
@@ -196,7 +200,9 @@ function csvUrl(link){
   const id = (link.match(/\/d\/([a-zA-Z0-9_-]+)/) || [])[1];
   if(!id) return null;
   const gid = (link.match(/[#&?]gid=(\d+)/) || [])[1] || "0";
-  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`;
+  const tab = (CONFIG.SHEET_TAB || "").trim();
+  const which = tab ? `sheet=${encodeURIComponent(tab)}` : `gid=${gid}`;
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&${which}`;
 }
 
 /* ---------- Parser CSV (maneja comillas y saltos de línea) ---------- */
@@ -226,8 +232,11 @@ async function load(){
     if(!res.ok) throw new Error("HTTP "+res.status);
     const text = await res.text();
     if(text.trim().startsWith("<")) throw new Error("La hoja no es pública");
-    const data = parseCSV(text).slice(1)           // quita encabezados
-      .filter(r => r.some(c => c.trim()!==""))
+    const all = parseCSV(text);
+    const isHeader = r => /n[uú]mero de orden/i.test(r[3]||"") || /fecha de pedido/i.test(r[0]||"");
+    const h = all.findIndex(isHeader);              // la hoja trae título arriba: busca la fila de encabezados
+    const data = all.slice(h >= 0 ? h+1 : 1)
+      .filter(r => !isHeader(r) && ((r[3]||"").trim() || (r[4]||"").trim()))   // solo filas con orden o cliente
       .map(r => Object.fromEntries(COLS.map((c,i)=>[c.k,(r[i]||"").trim()])));
     rows = data;
     $("err").classList.remove("on");
@@ -237,7 +246,7 @@ async function load(){
     setState("ok","En vivo");
   }catch(e){
     showError("No se pudo leer la hoja",
-      "Revisa que la hoja esté compartida como <strong>“Cualquier persona con el enlace” (lector)</strong> o publicada en la web. Detalle: "+esc(e.message));
+      "Revisa que la hoja esté compartida como <strong>“Cualquier persona con el enlace” (lector)</strong> y que el nombre de la pestaña en <code>SHEET_TAB</code> sea idéntico al de Google Sheets. Detalle: "+esc(e.message));
     setState("error","Error de conexión");
   }
 }
@@ -307,8 +316,9 @@ function render(){
     const i=rows.indexOf(r);
     return `<tr data-i="${i}" tabindex="0">`+TABLE_COLS.map(k=>{
       if(k==="status") return `<td>${badge(r.status)}</td>`;
-      if(k==="orden"||k==="guia") return `<td class="num">${esc(r[k])||"—"}</td>`;
+      if(k==="orden"||k==="guia"||k==="pedidoComercial") return `<td class="num">${esc(r[k])||"—"}</td>`;
       if(k==="cliente") return `<td class="client">${esc(r[k])}</td>`;
+      if(k==="nota") return `<td class="nota">${esc(r[k])||"—"}</td>`;
       return `<td>${esc(r[k])||"—"}</td>`;
     }).join("")+`</tr>`}).join("");
 }
@@ -318,12 +328,13 @@ function setStatus(s){ state.status = state.status===s ? "" : s; $("fStatus").va
 function openDrawer(i){
   const r=rows[i]; if(!r) return;
   $("dTitle").textContent=r.cliente||"Pedido"; $("dOrder").textContent=r.orden?("Orden "+r.orden):"";
-  $("dBody").innerHTML=`<div><dt>Status</dt><dd>${badge(r.status)}</dd></div>`+
-    COLS.filter(c=>!["cliente","orden","status"].includes(c.k)).map(c=>{
+  $("dBody").innerHTML=
+    COLS.map(c=>{
       const v=r[c.k]; let inner=v?esc(v):`<span style="color:var(--muted)">—</span>`;
+      if(c.k==="status") inner=badge(v);
       if(c.k==="email"&&v) inner=`<a href="mailto:${esc(v)}">${esc(v)}</a>`;
       if(c.k==="guia"&&v) inner=`${esc(v)}<button class="btn copy" data-copy="${esc(v)}">Copiar</button>`;
-      return `<div><dt>${c.label}</dt><dd class="${c.k==="guia"?"mono":""}">${inner}</dd></div>`}).join("");
+      return `<div><dt>${c.label}</dt><dd class="${["guia","orden","pedidoComercial"].includes(c.k)?"mono":""}">${inner}</dd></div>`}).join("");
   $("drawer").classList.add("on"); $("scrim").classList.add("on"); $("drawer").setAttribute("aria-hidden","false");
   $("dClose").focus();
 }
