@@ -184,8 +184,7 @@ const COLS = [
   {k:"actualizacion",   label:"Actualización"},
 ];
 // Columnas visibles en la tabla (el resto se ve al abrir el pedido)
-const TABLE_COLS = ["orden","cliente","agente","status","fechaEmbarque","guia","actualizacion"];
-
+const TABLE_COLS = ["fechaPedido","pedidoComercial","agente","orden","cliente","status","fechaEmbarque","guia","nota","email","actualizacion"];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let rows = [], sort = {k:"fechaPedido", dir:-1}, timer = null;
