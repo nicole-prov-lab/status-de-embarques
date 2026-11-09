@@ -116,20 +116,20 @@ dd a{color:var(--accent)}
 
 <header>
   <div>
-    <h1 id="title">Status de embarques</h1>
+    <h1 id="title">Status de embarques PROVINCO</h1>
     <div class="sub" id="sub">Cargando datos…</div>
   </div>
   <div class="tools">
     <span class="live"><span class="dot loading" id="dot"></span><span id="liveText">Conectando</span></span>
     <button class="btn" id="refresh">Actualizar</button>
-    <button class="btn" id="theme" aria-label="Cambiar tema">Tema</button>
+    <button class="btn" id="theme" aria-label="Cambiar tema">Modo Nocturno</button>
   </div>
 </header>
 
 <div class="error-box" id="err"></div>
 
 <section class="pipeline" aria-label="Resumen por status">
-  <div class="pipe-top"><span class="pipe-total" id="total">0</span><span class="pipe-label">pedidos en seguimiento</span></div>
+  <div class="pipe-top"><span class="pipe-total" id="total">0</span><span class="pipe-label">Pedidos Activos</span></div>
   <div class="bar" id="bar"></div>
   <div class="legend" id="legend"></div>
 </section>
@@ -153,7 +153,7 @@ dd a{color:var(--accent)}
 </div>
 
 <div class="scrim" id="scrim"></div>
-<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Detalle del pedido">
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Detalles del pedido">
   <div class="d-head"><div><h2 id="dTitle"></h2><small id="dOrder"></small></div><button class="btn" id="dClose">Cerrar</button></div>
   <dl id="dBody"></dl>
 </aside>
@@ -167,7 +167,7 @@ const CONFIG = {
   SHEET_URL: "https://docs.google.com/spreadsheets/d/1D6f-Bx60XoICoilatq5N7Jkgg6NZVgJJnmrn5lGtkD4/edit?usp=sharing",
   // Nombre exacto de la pestaña (tal como aparece abajo en Google Sheets). Déjalo vacío ("") para usar la pestaña del link.
   SHEET_TAB: "TABLA DE EMBARQUES",
-  TITLE: "Status de embarques",
+  TITLE: "Status de embarques PROVINCO",
   REFRESH_MINUTES: 5,     // se actualiza solo cada X minutos (0 = desactivado)
 };
 /* ============================================================ */
