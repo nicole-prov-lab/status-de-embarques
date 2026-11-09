@@ -18,8 +18,8 @@
   --font-mono:"IBM Plex Mono",ui-monospace,monospace;
 }
 :root[data-theme="light"]{
-  --bg:#eeeeee ; --surface:#eeeeee; --surface-2:#f4cccc; --line:#d5dfeb;
-  --text:#000000; --muted:#000000; --accent:#cc0000; --accent-ink:#ccff00;
+  --bg:#eeeeee ; --surface:#eeeeee; --surface-2:#f4cccc; --line:#cc0000;
+  --text:#000000; --muted:#000000; --accent:#cc0000; --accent-ink:#cc0000;
   --ok:#14804f; --info:#1f6fd6; --warn:#a66a00; --bad:#c93a3a; --neutral:#566a84;
 }
 *{box-sizing:border-box}
@@ -82,7 +82,7 @@ td.nota{white-space:normal;min-width:200px;max-width:320px}
 .empty{padding:48px 20px;text-align:center;color:var(--muted)}
 .empty strong{display:block;color:var(--text);font:600 17px var(--font-head);margin-bottom:6px}
 
-/* Panel de detalle */
+/* Panel de detalleS */
 .scrim{position:fixed;inset:0;background:rgba(5,10,18,.55);opacity:0;pointer-events:none;transition:opacity .2s}
 .scrim.on{opacity:1;pointer-events:auto}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--line);
@@ -159,20 +159,16 @@ dd a{color:var(--accent)}
 </aside>
 
 <script>
-/* ============================================================
-   CONFIGURACIÓN: solo cambia esto
-   ============================================================ */
+
 const CONFIG = {
-  // Pega aquí el link de tu Google Sheets (el de la barra del navegador, o el de "Publicar en la web" en CSV)
+  //  link Google Sheets 
   SHEET_URL: "https://docs.google.com/spreadsheets/d/1D6f-Bx60XoICoilatq5N7Jkgg6NZVgJJnmrn5lGtkD4/edit?usp=sharing",
-  // Nombre exacto de la pestaña (tal como aparece abajo en Google Sheets). Déjalo vacío ("") para usar la pestaña del link.
+  // Nombre exacto de la pestaña 
   SHEET_TAB: "TABLA DE EMBARQUES",
   TITLE: "Status de Embarques PROVINCO",
-  REFRESH_MINUTES: 5,     // se actualiza solo cada X minutos (0 = desactivado)
+  REFRESH_MINUTES: 5,     
 };
-/* ============================================================ */
 
-// Las columnas se leen por POSICIÓN (A a K), no por el nombre del encabezado.
 const COLS = [
   {k:"fechaPedido",     label:"Fecha de Pedido"},
   {k:"pedidoComercial", label:"Pedido en Comercial"},
@@ -186,7 +182,6 @@ const COLS = [
   {k:"email",           label:"E-mail de contacto"},
   {k:"actualizacion",   label:"Actualización"},
 ];
-// Columnas visibles en la tabla (mismo orden que la hoja). Las demás solo se ven en el panel al hacer clic en una fila.
 const HIDDEN_IN_TABLE = ["actualizacion","email","agente","pedidoComercial"];
 const TABLE_COLS = COLS.map(c => c.k).filter(k => !HIDDEN_IN_TABLE.includes(k));
 
@@ -194,7 +189,6 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let rows = [], sort = {k:"fechaPedido", dir:-1}, timer = null;
 
-/* ---------- Link de Google Sheets -> URL CSV ---------- */
 function csvUrl(link){
   if(!link || link.includes("PEGA_AQUI")) return null;
   if(/output=csv/.test(link) || /\/pub\?/.test(link)) return link.includes("output=csv") ? link : link + (link.includes("?")?"&":"?") + "output=csv";
@@ -206,7 +200,7 @@ function csvUrl(link){
   return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&${which}`;
 }
 
-/* ---------- Parser CSV (maneja comillas y saltos de línea) ---------- */
+
 function parseCSV(text){
   const out=[]; let row=[], f="", q=false;
   for(let i=0;i<text.length;i++){
@@ -223,7 +217,7 @@ function parseCSV(text){
   return out;
 }
 
-/* ---------- Carga ---------- */
+
 async function load(){
   setState("loading","Actualizando");
   const url = csvUrl(CONFIG.SHEET_URL);
@@ -243,7 +237,7 @@ async function load(){
     $("err").classList.remove("on");
     buildFilters(); render();
     const t = new Date().toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"});
-    $("sub").textContent = `Última lectura de la hoja a las ${t}`;
+    $("sub").textContent = `Última actualización: ${t}`;
     setState("ok","En vivo");
   }catch(e){
     showError("No se pudo leer la hoja",
@@ -254,7 +248,7 @@ async function load(){
 function setState(s,t){ $("dot").className="dot "+(s==="ok"?"":s); $("liveText").textContent=t }
 function showError(title,html){ const e=$("err"); e.innerHTML=`<strong>${title}</strong><br>${html}`; e.classList.add("on") }
 
-/* ---------- Colores de status ---------- */
+
 const STATUS_RULES = [
   [/entreg|recib|complet|cerrad/i, "--ok"],
   [/tr[aá]nsito|embarc|enviad|ruta|despach|aduana/i, "--info"],
@@ -264,7 +258,6 @@ const STATUS_RULES = [
 function statusVar(s){ for(const [re,v] of STATUS_RULES) if(re.test(s)) return v; return "--neutral" }
 function badge(s){ return s ? `<span class="badge" style="--c:var(${statusVar(s)})"><i></i>${esc(s)}</span>` : `<span style="color:var(--muted)">—</span>` }
 
-/* ---------- Fechas ---------- */
 function toTime(s){
   if(!s) return 0;
   let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
@@ -275,7 +268,6 @@ function toTime(s){
 }
 const DATE_KEYS = ["fechaPedido","fechaEmbarque","actualizacion"];
 
-/* ---------- Filtros y render ---------- */
 const state = {q:"", status:"", agent:""};
 function buildFilters(){
   const fill=(el,key,first)=>{
