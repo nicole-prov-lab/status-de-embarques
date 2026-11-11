@@ -6,16 +6,18 @@
 <title>Status de Embarques PROVINCO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#031942; --surface:#122033; --surface-2:#182a42; --line:#223752;
   --text:#ffffff; --muted:#ffffff; --accent:#38d0f0; --accent-ink:#06202a;
   --ok:#3ecf8e; --info:#5aa8ff; --warn:#f5b73d; --bad:#ff6b6b; --neutral:#8fa3bd;
-  --radius:10px;
-  --font-head:"Space Grotesk",system-ui,sans-serif;
-  --font-body:"IBM Plex Sans",system-ui,sans-serif;
-  --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+  --radius:4px;
+  --font-head:"Lexend",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-body:"Lexend",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --rule:color-mix(in srgb,var(--text) 24%,transparent);
+  --hair:color-mix(in srgb,var(--text) 13%,transparent);
+  --soft:color-mix(in srgb,var(--muted) 72%,transparent);
 }
 :root[data-theme="light"]{
   --bg:#eeeeee ; --surface:#eeeeee; --surface-2:#f4cccc; --line:#d5dfeb;
@@ -23,152 +25,204 @@
   --ok:#14804f; --info:#1f6fd6; --warn:#a66a00; --bad:#c93a3a; --neutral:#566a84;
 }
 *{box-sizing:border-box}
-html{scroll-padding-top:16px}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font-body);
-  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-.wrap{max-width:1280px;margin:0 auto;padding:28px 20px 64px}
+body{margin:0;background:var(--bg);color:var(--text);font:500 15px/1.5 var(--font-body);
+  padding-bottom:env(safe-area-inset-bottom,0px)}
+button,input,select{font-family:inherit;font-weight:500;font-size:14px;color:var(--text)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 20px}
+main.wrap{padding-top:22px;padding-bottom:64px}
 
-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
-h1{font:700 30px/1.1 var(--font-head);margin:0;letter-spacing:-.02em}
-.sub{color:var(--muted);margin-top:6px;font-size:14px}
-.tools{display:flex;gap:8px;align-items:center}
-.btn{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:8px;
-  padding:8px 12px;font:500 13px var(--font-body);cursor:pointer}
-.btn:hover{border-color:var(--accent)}
-.live{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
-.dot.loading{background:var(--warn);animation:pulse 1s infinite}
-.dot.error{background:var(--bad)}
-@keyframes pulse{50%{opacity:.3}}
+/* Encabezado tipo papelería */
+.top{background:var(--surface);border-top:5px solid var(--accent);border-bottom:1px solid var(--rule);
+  padding-top:env(safe-area-inset-top,0px)}
+.top-in{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-top:18px;padding-bottom:12px}
+h1{font-weight:700;font-size:26px;line-height:1.15;margin:0}
+.sub{color:var(--soft);font-size:13px;margin-top:2px}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.live{display:inline-flex;align-items:center;gap:8px;color:var(--soft);font-size:13px;margin-right:6px}
+.sq{width:9px;height:9px;background:var(--ok)}
+.sq.loading{background:var(--warn);animation:blink 1s infinite}
+.sq.error{background:var(--bad)}
+@keyframes blink{50%{opacity:.25}}
+.btn{background:transparent;border:1px solid var(--rule);border-radius:var(--radius);padding:8px 14px;font-weight:600;font-size:13px;cursor:pointer}
+.btn:hover{background:var(--surface-2)}
+.tabs{display:flex;gap:6px}
+.tab{background:none;border:0;border-bottom:4px solid transparent;color:var(--soft);font-weight:600;font-size:15px;
+  padding:10px 14px 8px;cursor:pointer;margin-bottom:-1px}
+.tab:hover{color:var(--text)}
+.tab[aria-current="page"]{color:var(--text);border-bottom-color:var(--accent)}
+.tab small{font:600 12px var(--font-body);margin-left:6px;padding:1px 7px;border:1px solid var(--rule);border-radius:2px}
 
-/* Barra de pipeline: el elemento principal */
-.pipeline{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 14px;margin-bottom:18px}
-.pipe-top{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
-.pipe-total{font:700 40px/1 var(--font-head);letter-spacing:-.03em}
-.pipe-label{color:var(--muted)}
-.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface-2);gap:2px}
-.seg{border:0;padding:0;cursor:pointer;min-width:6px;transition:flex-grow .35s ease,opacity .2s}
-.seg:hover{opacity:.8}
-.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:transparent;color:var(--text);
-  border-radius:999px;padding:5px 12px 5px 10px;font:500 13px var(--font-body);cursor:pointer}
-.chip:hover{border-color:var(--accent)}
-.chip[aria-pressed="true"]{background:var(--surface-2);border-color:var(--accent)}
-.chip i{width:9px;height:9px;border-radius:50%;display:block}
-.chip b{font-family:var(--font-head);font-weight:600}
+/* Vistas */
+body[data-view="activos"] .only-entregados{display:none!important}
+body[data-view="entregados"] .only-activos{display:none!important}
 
-.filters{display:grid;grid-template-columns:1fr 200px 200px auto;gap:10px;margin-bottom:12px}
-input,select{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:8px;
-  padding:10px 12px;font:400 14px var(--font-body);width:100%}
-input::placeholder{color:var(--muted)}
-.count{color:var(--muted);font-size:13px;margin:0 2px 8px}
+/* Bloques de resumen */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.tile{background:var(--surface);border:1px solid var(--rule);border-top:4px solid var(--c,var(--accent));
+  border-radius:var(--radius);padding:12px 14px;text-align:left;color:var(--text)}
+button.tile{cursor:pointer}
+button.tile:hover{background:var(--surface-2)}
+button.tile[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:1px;background:var(--surface-2)}
+.tile b{display:block;font-weight:700;font-size:30px;line-height:1.15}
+.tile span{font-weight:600;font-size:13px;color:var(--soft)}
 
-.table-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:1100px}
-th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
-th{font:600 13px var(--font-head);color:var(--muted);background:var(--surface);position:sticky;top:0;cursor:pointer;user-select:none}
-th:hover{color:var(--text)}
-th .arr{color:var(--accent);margin-left:4px}
+/* Gráficas */
+.charts{display:grid;grid-template-columns:1.7fr 1fr;gap:12px;margin-bottom:22px}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);padding:16px 18px}
+.panel h3{font-weight:600;font-size:15px;margin:0 0 4px}
+.panel .note{color:var(--soft);font-size:12.5px;margin:0 0 14px}
+.chart{display:flex;--avg:0%}
+.cell{flex:1;min-width:0}
+.plot{position:relative;height:220px;display:flex;align-items:flex-end;justify-content:center;border-bottom:2px solid var(--text)}
+.plot::after{content:"";position:absolute;left:0;right:0;bottom:var(--avg);border-top:2px dashed var(--soft)}
+.vbar{position:relative;width:58%;max-width:60px;background:var(--accent);border-radius:2px 2px 0 0;min-height:2px}
+.vbar span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;font-weight:700;font-size:13px;white-space:nowrap}
+.lab{text-align:center;padding-top:8px;font-weight:600;font-size:12.5px;line-height:1.3}
+.lab small{display:block;font-weight:500;color:var(--soft);font-size:12px}
+.hrow{display:grid;grid-template-columns:104px 1fr 34px;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
+.hl{font-weight:600}
+.track{height:18px;background:color-mix(in srgb,var(--text) 10%,transparent);border-radius:2px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent)}
+.hc{font-weight:700;text-align:right}
+.nodata{color:var(--soft);padding:26px 0}
+
+/* Filtros */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.filters input{flex:1 1 240px}
+.filters select{flex:0 1 200px}
+input,select{background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);padding:10px 12px}
+input::placeholder{color:var(--soft)}
+.count{color:var(--soft);font-size:13px;margin:0 0 8px}
+
+/* Tabla */
+.table-box{background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th{font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;text-align:left;white-space:nowrap;
+  padding:12px 14px;background:var(--surface-2);border-bottom:2px solid var(--accent);cursor:pointer;user-select:none}
+th .arr{margin-left:5px}
+td{padding:11px 14px;border-bottom:1px solid var(--hair);white-space:nowrap;font-variant-numeric:tabular-nums}
+td.client{white-space:normal;min-width:200px}
+td.nota{white-space:normal;min-width:200px;max-width:320px}
 tbody tr{cursor:pointer}
+tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--surface-2) 38%,transparent)}
 tbody tr:hover td{background:var(--surface-2)}
 tbody tr:last-child td{border-bottom:0}
-td.num{font-family:var(--font-mono);font-size:13px}
-td.client{white-space:normal;min-width:180px;font-weight:500}
-td.nota{white-space:normal;min-width:200px;max-width:320px}
-.badge{display:inline-flex;align-items:center;gap:7px;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:500;
-  background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
-.badge i{width:7px;height:7px;border-radius:50%;background:var(--c)}
-.empty{padding:48px 20px;text-align:center;color:var(--muted)}
-.empty strong{display:block;color:var(--text);font:600 17px var(--font-head);margin-bottom:6px}
+.tag{display:inline-block;padding:3px 10px;border-left:4px solid var(--c);border-radius:2px;font-weight:600;font-size:12px;
+  background:color-mix(in srgb,var(--c) 20%,transparent)}
+.dash{color:var(--soft)}
+.empty{padding:44px 20px;text-align:center;color:var(--soft)}
+.empty strong{display:block;color:var(--text);font-weight:600;font-size:16px;margin-bottom:4px}
 
-/* Panel de detalleS */
-.scrim{position:fixed;inset:0;background:rgba(5,10,18,.55);opacity:0;pointer-events:none;transition:opacity .2s}
+/* Panel de detalle */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s}
 .scrim.on{opacity:1;pointer-events:auto}
-.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--line);
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:4px solid var(--accent);
   transform:translateX(100%);transition:transform .25s ease;overflow-y:auto;padding:22px;
   padding-top:calc(22px + env(safe-area-inset-top,0px));padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
 .drawer.on{transform:none}
-.d-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
-.d-head h2{font:700 22px/1.2 var(--font-head);margin:0}
-.d-head small{color:var(--muted);font-family:var(--font-mono)}
-dl{margin:0;display:grid;gap:14px}
-dt{color:var(--muted);font-size:13px}
-dd{margin:2px 0 0;word-break:break-word}
-dd.mono{font-family:var(--font-mono)}
+.d-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}
+.d-head h2{font-weight:700;font-size:21px;line-height:1.25;margin:0}
+.d-head small{color:var(--soft);font-size:13px}
+dl{margin:0}
+.item{padding:11px 0;border-bottom:1px solid var(--hair)}
+dt{font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--soft)}
+dd{margin:3px 0 0;word-break:break-word}
 dd a{color:var(--accent)}
-.copy{margin-left:8px;font-size:12px;padding:2px 8px}
+.copy{margin-left:8px;padding:2px 8px;font-size:12px}
 
-.error-box{background:color-mix(in srgb,var(--bad) 12%,transparent);border:1px solid var(--bad);border-radius:var(--radius);
-  padding:14px 16px;margin-bottom:16px;display:none}
+.error-box{background:color-mix(in srgb,var(--bad) 14%,transparent);border:1px solid var(--bad);border-left-width:5px;
+  border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;display:none}
 .error-box.on{display:block}
+.error-box strong{font-weight:600}
 
-@media (max-width:760px){
-  .filters{grid-template-columns:1fr 1fr}
-  .filters input{grid-column:1/-1}
-  h1{font-size:25px}
-}
+@media (max-width:820px){ .charts{grid-template-columns:1fr} h1{font-size:22px} }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
-<body>
-<div class="wrap">
+<body data-view="activos">
 
-<header>
-  <div>
-    <h1 id="title">Status de Embarques PROVINCO</h1>
-    <div class="sub" id="sub">Cargando datos…</div>
+<header class="top">
+  <div class="wrap top-in">
+    <div>
+      <h1 id="title">Status de Embarques PROVINCO</h1>
+      <div class="sub" id="sub">Cargando datos…</div>
+    </div>
+    <div class="tools">
+      <span class="live"><span class="sq loading" id="dot"></span><span id="liveText">Conectando</span></span>
+      <button class="btn" id="refresh">Actualizar</button>
+      <button class="btn" id="theme"></button>
+    </div>
   </div>
-  <div class="tools">
-    <span class="live"><span class="dot loading" id="dot"></span><span id="liveText">Conectando</span></span>
-    <button class="btn" id="refresh">Actualizar</button>
-    <button class="btn" id="theme" aria-label="Cambiar tema">Theme</button>
+  <div class="wrap">
+    <nav class="tabs" aria-label="Vistas">
+      <button class="tab" data-view="activos">Embarques activos<small id="nAct">0</small></button>
+      <button class="tab" data-view="entregados">Entregados<small id="nEnt">0</small></button>
+    </nav>
   </div>
 </header>
 
-<div class="error-box" id="err"></div>
+<main class="wrap">
+  <div class="error-box" id="err"></div>
 
-<section class="pipeline" aria-label="Resumen por status">
-  <div class="pipe-top"><span class="pipe-total" id="total">0</span><span class="pipe-label">Pedidos Activos</span></div>
-  <div class="bar" id="bar"></div>
-  <div class="legend" id="legend"></div>
-</section>
+  <section class="only-activos" aria-label="Resumen por status">
+    <div class="tiles" id="tiles"></div>
+  </section>
 
-<div class="filters">
-  <input id="q" type="search" placeholder="Buscar por cliente, orden, guía, nota…" aria-label="Buscar">
-  <select id="fStatus" aria-label="Filtrar por status"><option value="">Todos los status</option></select>
-  <select id="fAgent" aria-label="Filtrar por agente"><option value="">Todos los agentes</option></select>
-  <button class="btn" id="clear">Limpiar filtros</button>
-</div>
-<p class="count" id="count"></p>
+  <section class="only-entregados" aria-label="Tiempos de entrega">
+    <div class="tiles" id="kpis"></div>
+    <div class="charts">
+      <div class="panel">
+        <h3>Promedio de días por mes</h3>
+        <p class="note" id="monthNote">Días entre la fecha de pedido y la fecha de embarque, agrupados por mes de embarque.</p>
+        <div id="chartMonth"></div>
+      </div>
+      <div class="panel">
+        <h3>¿Cuántos días tardamos?</h3>
+        <p class="note">Número de embarques por rango de días.</p>
+        <div id="chartDist"></div>
+      </div>
+    </div>
+  </section>
 
-<div class="table-box">
-  <table>
-    <thead><tr id="thead"></tr></thead>
-    <tbody id="tbody"></tbody>
-  </table>
-  <div class="empty" id="empty" hidden><strong>Sin resultados</strong>Cambia la búsqueda o limpia los filtros para ver más pedidos.</div>
-</div>
+  <div class="filters">
+    <input id="q" type="search" placeholder="Buscar por cliente, orden, guía, nota…" aria-label="Buscar">
+    <select id="fStatus" class="only-activos" aria-label="Filtrar por status"><option value="">Todos los status</option></select>
+    <select id="fAgent" aria-label="Filtrar por agente"><option value="">Todos los agentes</option></select>
+    <button class="btn" id="clear">Limpiar filtros</button>
+  </div>
+  <p class="count" id="count"></p>
 
-</div>
+  <div class="table-box">
+    <table>
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden><strong>Sin resultados</strong>Cambia la búsqueda o limpia los filtros para ver más pedidos.</div>
+  </div>
+</main>
 
 <div class="scrim" id="scrim"></div>
-<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Detalles del Pedido">
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Detalle del pedido">
   <div class="d-head"><div><h2 id="dTitle"></h2><small id="dOrder"></small></div><button class="btn" id="dClose">Cerrar</button></div>
   <dl id="dBody"></dl>
 </aside>
 
 <script>
-
+/* ============================================================
+   CONFIGURACIÓN: solo cambia esto
+   ============================================================ */
 const CONFIG = {
-  //  link Google Sheets 
+  // Pega aquí el link de tu Google Sheets (el de la barra del navegador)
   SHEET_URL: "https://docs.google.com/spreadsheets/d/1D6f-Bx60XoICoilatq5N7Jkgg6NZVgJJnmrn5lGtkD4/edit?usp=sharing",
-  // Nombre exacto de la pestaña 
+  // Nombre exacto de la pestaña (tal como aparece abajo en Google Sheets). Déjalo vacío ("") para usar la pestaña del link.
   SHEET_TAB: "TABLA DE EMBARQUES",
-  TITLE: "Status de Embarques PROVINCO",
-  REFRESH_MINUTES: 5,     
+  TITLE: "Status de embarques",
+  REFRESH_MINUTES: 5,     // se actualiza solo cada X minutos (0 = desactivado)
 };
+/* ============================================================ */
 
+// Las columnas se leen por POSICIÓN (A a K), no por el nombre del encabezado.
 const COLS = [
   {k:"fechaPedido",     label:"Fecha de Pedido"},
   {k:"pedidoComercial", label:"Pedido en Comercial"},
@@ -182,13 +236,20 @@ const COLS = [
   {k:"email",           label:"E-mail de contacto"},
   {k:"actualizacion",   label:"Actualización"},
 ];
+// Columnas que NO se ven en la tabla (sí en el panel al hacer clic en una fila)
 const HIDDEN_IN_TABLE = ["actualizacion","email","agente","pedidoComercial"];
 const TABLE_COLS = COLS.map(c => c.k).filter(k => !HIDDEN_IN_TABLE.includes(k));
+const labelOf = k => k==="dias" ? "Días" : COLS.find(c=>c.k===k).label;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let rows = [], sort = {k:"fechaPedido", dir:-1}, timer = null;
+const MES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const DAY = 86400000;
 
+let rows = [], loaded = false, view = "activos", sort = {k:"fechaPedido", dir:-1}, timer = null;
+const state = {q:"", status:"", agent:""};
+
+/* ---------- Link de Google Sheets -> URL CSV ---------- */
 function csvUrl(link){
   if(!link || link.includes("PEGA_AQUI")) return null;
   if(/output=csv/.test(link) || /\/pub\?/.test(link)) return link.includes("output=csv") ? link : link + (link.includes("?")?"&":"?") + "output=csv";
@@ -200,7 +261,7 @@ function csvUrl(link){
   return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&${which}`;
 }
 
-
+/* ---------- Parser CSV (maneja comillas y saltos de línea) ---------- */
 function parseCSV(text){
   const out=[]; let row=[], f="", q=false;
   for(let i=0;i<text.length;i++){
@@ -217,7 +278,24 @@ function parseCSV(text){
   return out;
 }
 
+/* ---------- Fechas y días ---------- */
+function toTime(s){
+  if(!s) return 0;
+  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if(m){ let y=+m[3]; if(y<100) y+=2000; return new Date(y,+m[2]-1,+m[1]).getTime() }
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return new Date(+m[1],+m[2]-1,+m[3]).getTime();
+  const t = Date.parse(s); return isNaN(t)?0:t;
+}
+const DATE_KEYS = ["fechaPedido","fechaEmbarque","actualizacion"];
+function addDays(r){            // días desde la fecha de pedido hasta la fecha de embarque
+  const a=toTime(r.fechaPedido), b=toTime(r.fechaEmbarque);
+  r.dias = (a && b && b>=a) ? Math.round((b-a)/DAY) : null;
+  return r;
+}
+const isDelivered = r => /entreg/i.test(r.status);
 
+/* ---------- Carga ---------- */
 async function load(){
   setState("loading","Actualizando");
   const url = csvUrl(CONFIG.SHEET_URL);
@@ -230,14 +308,14 @@ async function load(){
     const all = parseCSV(text);
     const isHeader = r => /n[uú]mero de orden/i.test(r[3]||"") || /fecha de pedido/i.test(r[0]||"");
     const h = all.findIndex(isHeader);              // la hoja trae título arriba: busca la fila de encabezados
-    const data = all.slice(h >= 0 ? h+1 : 1)
+    rows = all.slice(h >= 0 ? h+1 : 1)
       .filter(r => !isHeader(r) && ((r[3]||"").trim() || (r[4]||"").trim()))   // solo filas con orden o cliente
-      .map(r => Object.fromEntries(COLS.map((c,i)=>[c.k,(r[i]||"").trim()])));
-    rows = data;
+      .map(r => addDays(Object.fromEntries(COLS.map((c,i)=>[c.k,(r[i]||"").trim()]))));
+    loaded = true;
     $("err").classList.remove("on");
     buildFilters(); render();
     const t = new Date().toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"});
-    $("sub").textContent = `Última actualización: ${t}`;
+    $("sub").textContent = `Última lectura de la hoja a las ${t}`;
     setState("ok","En vivo");
   }catch(e){
     showError("No se pudo leer la hoja",
@@ -245,10 +323,10 @@ async function load(){
     setState("error","Error de conexión");
   }
 }
-function setState(s,t){ $("dot").className="dot "+(s==="ok"?"":s); $("liveText").textContent=t }
+function setState(s,t){ $("dot").className="sq "+(s==="ok"?"":s); $("liveText").textContent=t }
 function showError(title,html){ const e=$("err"); e.innerHTML=`<strong>${title}</strong><br>${html}`; e.classList.add("on") }
 
-
+/* ---------- Colores de status ---------- */
 const STATUS_RULES = [
   [/entreg|recib|complet|cerrad/i, "--ok"],
   [/tr[aá]nsito|embarc|enviad|ruta|despach|aduana/i, "--info"],
@@ -256,22 +334,16 @@ const STATUS_RULES = [
   [/retras|cancel|problem|detenid|incidenc|rechaz/i, "--bad"],
 ];
 function statusVar(s){ for(const [re,v] of STATUS_RULES) if(re.test(s)) return v; return "--neutral" }
-function badge(s){ return s ? `<span class="badge" style="--c:var(${statusVar(s)})"><i></i>${esc(s)}</span>` : `<span style="color:var(--muted)">—</span>` }
+function tag(s){ return s ? `<span class="tag" style="--c:var(${statusVar(s)})">${esc(s)}</span>` : `<span class="dash">—</span>` }
 
-function toTime(s){
-  if(!s) return 0;
-  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-  if(m){ let y=+m[3]; if(y<100) y+=2000; return new Date(y,+m[2]-1,+m[1]).getTime() }
-  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(m) return new Date(+m[1],+m[2]-1,+m[3]).getTime();
-  const t = Date.parse(s); return isNaN(t)?0:t;
-}
-const DATE_KEYS = ["fechaPedido","fechaEmbarque","actualizacion"];
+/* ---------- Vistas, filtros y orden ---------- */
+const viewRows = () => rows.filter(r => view==="entregados" ? isDelivered(r) : !isDelivered(r));
 
-const state = {q:"", status:"", agent:""};
 function buildFilters(){
+  const base = viewRows();
   const fill=(el,key,first)=>{
-    const cur=el.value; const vals=[...new Set(rows.map(r=>r[key]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+    const cur=el.value;
+    const vals=[...new Set(base.map(r=>r[key]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
     el.innerHTML=`<option value="">${first}</option>`+vals.map(v=>`<option>${esc(v)}</option>`).join("");
     el.value=vals.includes(cur)?cur:"";
   };
@@ -280,54 +352,106 @@ function buildFilters(){
 }
 function filtered(){
   const q=state.q.toLowerCase();
-  let list=rows.filter(r=>
+  const list=viewRows().filter(r=>
     (!state.status||r.status===state.status) && (!state.agent||r.agente===state.agent) &&
-    (!q||Object.values(r).some(v=>v.toLowerCase().includes(q))));
+    (!q||Object.values(r).some(v=>String(v ?? "").toLowerCase().includes(q))));
   const {k,dir}=sort;
-  list.sort((a,b)=> DATE_KEYS.includes(k) ? (toTime(a[k])-toTime(b[k]))*dir
-                    : a[k].localeCompare(b[k],"es",{numeric:true})*dir);
+  list.sort((a,b)=>{
+    if(DATE_KEYS.includes(k)) return (toTime(a[k])-toTime(b[k]))*dir;
+    if(k==="dias") return ((a.dias ?? -1)-(b.dias ?? -1))*dir;
+    return String(a[k]).localeCompare(String(b[k]),"es",{numeric:true})*dir;
+  });
   return list;
 }
-function renderSummary(){
-  const counts={}; rows.forEach(r=>{const s=r.status||"Sin status"; counts[s]=(counts[s]||0)+1});
-  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-  $("total").textContent=rows.length;
-  $("bar").innerHTML=entries.map(([s,n])=>
-    `<button class="seg" title="${esc(s)}: ${n}" aria-label="${esc(s)}: ${n}" data-s="${esc(s)}" style="flex:${n} 1 0;background:var(${statusVar(s)})"></button>`).join("");
-  $("legend").innerHTML=entries.map(([s,n])=>
-    `<button class="chip" data-s="${esc(s)}" aria-pressed="${state.status===s}"><i style="background:var(${statusVar(s)})"></i>${esc(s)} <b>${n}</b></button>`).join("");
+function setView(v){
+  view = v==="entregados" ? "entregados" : "activos";
+  state.status=""; sort = {k:"fechaPedido", dir:-1};
+  if(loaded) buildFilters();
+  render();
 }
+const hashView = () => location.hash.replace("#","")==="entregados" ? "entregados" : "activos";
+
+/* ---------- Resumen de activos (sin "sin status") ---------- */
+function renderTiles(){
+  const act = viewRows(); const counts={};
+  act.forEach(r=>{ if(r.status) counts[r.status]=(counts[r.status]||0)+1 });
+  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  $("tiles").innerHTML =
+    `<button class="tile" data-s="" aria-pressed="${state.status===""}"><b>${act.length}</b><span>Todos los activos</span></button>` +
+    entries.map(([s,n])=>`<button class="tile" data-s="${esc(s)}" aria-pressed="${state.status===s}" style="--c:var(${statusVar(s)})"><b>${n}</b><span>${esc(s)}</span></button>`).join("");
+}
+
+/* ---------- Tiempos de entrega (vista Entregados) ---------- */
+function renderDelivered(list){
+  const w=list.filter(r=>r.dias!=null);
+  const tile=(n,l)=>`<div class="tile"><b>${n}</b><span>${l}</span></div>`;
+  if(!w.length){
+    $("kpis").innerHTML = tile(list.length,"Entregados");
+    $("chartMonth").innerHTML = `<div class="nodata">Todavía no hay entregados con fecha de pedido y de embarque válidas para calcular días.</div>`;
+    $("chartDist").innerHTML = ""; return;
+  }
+  const avg = w.reduce((a,r)=>a+r.dias,0)/w.length;
+  const mn = Math.min(...w.map(r=>r.dias)), mx = Math.max(...w.map(r=>r.dias));
+  $("kpis").innerHTML = tile(list.length,"Entregados") + tile(avg.toFixed(1)+" d","Promedio de días") + tile(mn+" d","Más rápido") + tile(mx+" d","Más lento");
+
+  // Promedio por mes de embarque
+  const by={};
+  w.forEach(r=>{ const d=new Date(toTime(r.fechaEmbarque)); const key=d.getFullYear()*12+d.getMonth(); (by[key]=by[key]||{s:0,n:0}); by[key].s+=r.dias; by[key].n++ });
+  const keys=Object.keys(by).map(Number).sort((a,b)=>a-b).slice(-12);
+  const top=Math.max(...keys.map(k=>by[k].s/by[k].n), avg)*1.15;
+  $("chartMonth").innerHTML = `<div class="chart" style="--avg:${(avg/top*100).toFixed(2)}%">` + keys.map(k=>{
+    const v=by[k].s/by[k].n, y=Math.floor(k/12), m=k%12;
+    return `<div class="cell"><div class="plot"><div class="vbar" style="height:${(v/top*100).toFixed(2)}%"><span>${v.toFixed(1)}</span></div></div>`+
+           `<div class="lab">${MES[m]} ${y}<small>${by[k].n} emb.</small></div></div>`}).join("") + `</div>`;
+  $("monthNote").textContent = `Días entre la fecha de pedido y la de embarque, por mes de embarque. La línea punteada es el promedio general (${avg.toFixed(1)} días).`;
+
+  // Distribución por rangos
+  const B=[[0,7,"0 a 7 días"],[8,14,"8 a 14 días"],[15,30,"15 a 30 días"],[31,60,"31 a 60 días"],[61,Infinity,"Más de 60 días"]];
+  const counts=B.map(([a,b])=>w.filter(r=>r.dias>=a&&r.dias<=b).length), mc=Math.max(...counts,1);
+  $("chartDist").innerHTML = B.map((b,i)=>
+    `<div class="hrow"><span class="hl">${b[2]}</span><span class="track"><i style="width:${counts[i]/mc*100}%"></i></span><span class="hc">${counts[i]}</span></div>`).join("");
+}
+
+/* ---------- Render ---------- */
 function render(){
-  renderSummary();
-  $("thead").innerHTML=TABLE_COLS.map(k=>{
-    const c=COLS.find(c=>c.k===k);
-    return `<th data-k="${k}">${c.label}${sort.k===k?`<span class="arr">${sort.dir>0?"↑":"↓"}</span>`:""}</th>`}).join("");
-  const list=filtered();
-  $("count").textContent=`${list.length} de ${rows.length} pedidos`;
-  $("empty").hidden=list.length>0;
-  $("tbody").innerHTML=list.map(r=>{
+  document.body.dataset.view = view;
+  document.querySelectorAll(".tab").forEach(t=>{ if(t.dataset.view===view) t.setAttribute("aria-current","page"); else t.removeAttribute("aria-current") });
+  if(!loaded) return;
+  $("nAct").textContent = rows.filter(r=>!isDelivered(r)).length;
+  $("nEnt").textContent = rows.filter(isDelivered).length;
+
+  const list = filtered();
+  if(view==="activos") renderTiles(); else renderDelivered(list);
+
+  const cols = view==="entregados" ? [...TABLE_COLS,"dias"] : TABLE_COLS;
+  $("thead").innerHTML = cols.map(k=>
+    `<th data-k="${k}">${labelOf(k)}${sort.k===k?`<span class="arr">${sort.dir>0?"↑":"↓"}</span>`:""}</th>`).join("");
+  $("count").textContent = `${list.length} de ${viewRows().length} pedidos`;
+  $("empty").hidden = list.length>0;
+  $("tbody").innerHTML = list.map(r=>{
     const i=rows.indexOf(r);
-    return `<tr data-i="${i}" tabindex="0">`+TABLE_COLS.map(k=>{
-      if(k==="status") return `<td>${badge(r.status)}</td>`;
-      if(k==="orden"||k==="guia"||k==="pedidoComercial") return `<td class="num">${esc(r[k])||"—"}</td>`;
+    return `<tr data-i="${i}" tabindex="0">`+cols.map(k=>{
+      if(k==="status") return `<td>${tag(r.status)}</td>`;
       if(k==="cliente") return `<td class="client">${esc(r[k])}</td>`;
-      if(k==="nota") return `<td class="nota">${esc(r[k])||"—"}</td>`;
-      return `<td>${esc(r[k])||"—"}</td>`;
+      if(k==="nota") return `<td class="nota">${esc(r[k])||'<span class="dash">—</span>'}</td>`;
+      if(k==="dias") return `<td>${r.dias==null?'<span class="dash">—</span>':r.dias+" d"}</td>`;
+      return `<td>${esc(r[k])||'<span class="dash">—</span>'}</td>`;
     }).join("")+`</tr>`}).join("");
 }
-function setStatus(s){ state.status = state.status===s ? "" : s; $("fStatus").value=state.status; render() }
 
-/* ---------- Detalle ---------- */
+/* ---------- Detalle (orden A a K) ---------- */
 function openDrawer(i){
   const r=rows[i]; if(!r) return;
   $("dTitle").textContent=r.cliente||"Pedido"; $("dOrder").textContent=r.orden?("Orden "+r.orden):"";
-  $("dBody").innerHTML=
-    COLS.map(c=>{
-      const v=r[c.k]; let inner=v?esc(v):`<span style="color:var(--muted)">—</span>`;
-      if(c.k==="status") inner=badge(v);
-      if(c.k==="email"&&v) inner=`<a href="mailto:${esc(v)}">${esc(v)}</a>`;
-      if(c.k==="guia"&&v) inner=`${esc(v)}<button class="btn copy" data-copy="${esc(v)}">Copiar</button>`;
-      return `<div><dt>${c.label}</dt><dd class="${["guia","orden","pedidoComercial"].includes(c.k)?"mono":""}">${inner}</dd></div>`}).join("");
+  const items = COLS.map(c=>{
+    const v=r[c.k]; let inner=v?esc(v):'<span class="dash">—</span>';
+    if(c.k==="status") inner=tag(v);
+    if(c.k==="email"&&v) inner=`<a href="mailto:${esc(v)}">${esc(v)}</a>`;
+    if(c.k==="guia"&&v) inner=`${esc(v)}<button class="btn copy" data-copy="${esc(v)}">Copiar</button>`;
+    return `<div class="item"><dt>${c.label}</dt><dd>${inner}</dd></div>`;
+  });
+  if(r.dias!=null) items.push(`<div class="item"><dt>Días de pedido a embarque</dt><dd>${r.dias} días</dd></div>`);
+  $("dBody").innerHTML = items.join("");
   $("drawer").classList.add("on"); $("scrim").classList.add("on"); $("drawer").setAttribute("aria-hidden","false");
   $("dClose").focus();
 }
@@ -337,10 +461,22 @@ function closeDrawer(){ $("drawer").classList.remove("on"); $("scrim").classList
 $("q").addEventListener("input",e=>{state.q=e.target.value;render()});
 $("fStatus").addEventListener("change",e=>{state.status=e.target.value;render()});
 $("fAgent").addEventListener("change",e=>{state.agent=e.target.value;render()});
-$("clear").addEventListener("click",()=>{state={...state,q:"",status:"",agent:""};$("q").value="";$("fStatus").value="";$("fAgent").value="";render()});
+$("clear").addEventListener("click",()=>{
+  state.q=""; state.status=""; state.agent="";
+  $("q").value=""; $("fStatus").value=""; $("fAgent").value="";
+  render();
+});
 $("refresh").addEventListener("click",load);
-$("bar").addEventListener("click",e=>{const b=e.target.closest("[data-s]"); if(b) setStatus(b.dataset.s)});
-$("legend").addEventListener("click",e=>{const b=e.target.closest("[data-s]"); if(b) setStatus(b.dataset.s)});
+$("tiles").addEventListener("click",e=>{
+  const b=e.target.closest("[data-s]"); if(!b) return;
+  const s=b.dataset.s; state.status = (s===""||state.status===s) ? "" : s;
+  $("fStatus").value=state.status; render();
+});
+document.querySelector(".tabs").addEventListener("click",e=>{
+  const t=e.target.closest(".tab"); if(!t) return;
+  location.hash = t.dataset.view;
+});
+window.addEventListener("hashchange",()=>setView(hashView()));
 $("thead").addEventListener("click",e=>{
   const th=e.target.closest("th"); if(!th) return;
   sort = sort.k===th.dataset.k ? {k:sort.k,dir:-sort.dir} : {k:th.dataset.k,dir:1}; render();
@@ -355,7 +491,7 @@ $("dBody").addEventListener("click",e=>{
 });
 
 /* Tema claro/oscuro (se recuerda en el navegador) */
-function applyTheme(t){ document.documentElement.dataset.theme=t }
+function applyTheme(t){ document.documentElement.dataset.theme=t; $("theme").textContent = t==="light" ? "Modo oscuro" : "Modo claro" }
 let saved=null; try{ saved=localStorage.getItem("theme") }catch(e){}
 applyTheme(saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
 $("theme").addEventListener("click",()=>{
@@ -365,6 +501,7 @@ $("theme").addEventListener("click",()=>{
 
 /* Inicio */
 document.title=CONFIG.TITLE; $("title").textContent=CONFIG.TITLE;
+view = hashView(); render();
 load();
 if(CONFIG.REFRESH_MINUTES>0) timer=setInterval(load, CONFIG.REFRESH_MINUTES*60000);
 </script>
