@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Embarques PROVINCO </title>
+<title>Embarques</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&display=swap" rel="stylesheet">
@@ -21,30 +21,25 @@ button,input{font-family:inherit;font-weight:500;color:inherit}
 :focus-visible{outline:3px solid var(--red);outline-offset:2px}
 h1,h2{margin:0}
 
-/* ---------- Portada ---------- */
-.hero{position:relative;display:flex;align-items:flex-end;justify-content:center;
-  min-height:clamp(150px,26vw,300px);padding:0 2vw;overflow:hidden;
-  background-color:#20242b;
-  background-image:linear-gradient(rgba(12,12,14,.55),rgba(12,12,14,.55)),url("fondo-contenedores.jpg");
-  background-size:cover;background-position:center}
-.hero h1{font-weight:700;color:var(--red);font-size:clamp(58px,15.5vw,200px);line-height:1;letter-spacing:-.05em;
-  margin-bottom:-.12em;padding-top:.15em;text-align:center}
-.brand{position:absolute;top:clamp(14px,3.4vw,38px);right:4.5vw;font-weight:700;color:var(--red);font-size:clamp(15px,2.6vw,24px)}
+/* ---------- Banner (imagen de Canva + datos en vivo encima) ---------- */
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.banner{position:relative;container-type:inline-size;background:#fff;line-height:0}
+.banner-img{display:block;width:100%;height:auto;min-height:60px;background:#20242b;color:#fff;font:500 14px/1.4 var(--font)}
+.ov{position:absolute;line-height:1;white-space:nowrap;color:var(--red)}
+/* "29": a la izquierda de "Pedidos Activos", misma línea base */
+.ov-total{left:0;width:14.64%;text-align:right;font-weight:700;
+  font-size:6.557vw;font-size:6.557cqw;top:calc(89.83% - .875em)}
+/* fecha: justo después de "Última Actualización:" */
+.ov-updated{left:13.58%;font-weight:500;
+  font-size:1.288vw;font-size:max(1.288cqw,9px);top:calc(73.95% - .875em)}
+.linkbtn{background:none;border:0;padding:0;margin-left:.9em;color:var(--red);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;line-height:1}
+.conn{position:absolute;left:84.9%;width:12.3%;top:93.4%;text-align:center;line-height:1.2;
+  font-weight:600;font-size:max(1.2cqw,10px);color:var(--red)}
 
 /* ---------- Resumen ---------- */
-.summary{background:#fff;padding:26px 5vw 30px}
+.summary{background:#fff;padding:0 5vw 30px}
 .sum-in{max-width:1000px;margin:0 auto}
-.sum-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
-.updated{color:var(--red);font-weight:600;font-size:12px}
-.linkbtn{background:none;border:0;padding:0;margin-left:8px;color:var(--red);font-weight:600;font-size:12px;text-decoration:underline;cursor:pointer}
-.big{display:flex;align-items:baseline;gap:12px;color:var(--red);margin-top:4px}
-.big b{font-weight:700;font-size:clamp(56px,9vw,88px);line-height:1}
-.big span{font-weight:600;font-size:clamp(18px,3vw,26px)}
-.sticker{position:relative;flex:none;margin:14px 14px 0 0;transform:rotate(-7deg);background:rgba(244,150,168,.62);
-  padding:7px 18px;font-weight:600;font-size:12px;color:#444}
-.sticker svg{position:absolute;top:-24px;right:-18px;width:38px;height:38px}
-.sticker.error{background:rgba(207,3,3,.25)}
-.meter{display:flex;height:22px;border-radius:999px;overflow:hidden;background:#e6e6e6;margin:24px 0 18px}
+.meter{display:flex;height:22px;border-radius:999px;overflow:hidden;background:#e6e6e6;margin:6px 0 18px}
 .seg{border:0;padding:0;min-width:8px;cursor:pointer;transition:flex-grow .35s ease,opacity .2s}
 .seg:hover{opacity:.8}
 .pills{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 16px}
@@ -147,24 +142,17 @@ dd a{color:var(--red-deep)}
 </head>
 <body>
 
-<section class="hero">
-  <div class="brand" id="brand">Provinco.</div>
-  <h1 id="title">Embarques</h1>
-</section>
+<header class="banner" id="banner">
+  <img class="banner-img" src="banner.jpg" alt="Embarques, Provinco." decoding="async">
+  <h1 class="sr-only" id="title">Embarques</h1>
+  <div class="ov ov-updated"><span id="updated">—</span><button class="linkbtn" id="refresh">Actualizar</button></div>
+  <div class="ov ov-total"><b id="total">0</b></div>
+  <div class="conn" id="conn" hidden></div>
+</header>
 
 <section class="summary" aria-label="Resumen">
   <div class="error-box" id="err"></div>
   <div class="sum-in">
-    <div class="sum-top">
-      <div>
-        <div class="updated">Última Actualización: <span id="updated">—</span><button class="linkbtn" id="refresh">Actualizar</button></div>
-        <div class="big"><b id="total">0</b><span>Pedidos Activos</span></div>
-      </div>
-      <div class="sticker" id="sticker">
-        <svg viewBox="0 0 48 48" aria-hidden="true"><g transform="rotate(35 24 24)"><rect x="19" y="3" width="10" height="9" rx="2" fill="#8d949b"/><path d="M16 12h16l-3 15H19z" fill="#b9bfc5"/><rect x="13" y="27" width="22" height="4" rx="2" fill="#8d949b"/><path d="M24 31v14" stroke="#6b7076" stroke-width="2" stroke-linecap="round"/></g></svg>
-        <span id="stickerText">Conectando…</span>
-      </div>
-    </div>
     <div class="meter" id="meter"></div>
     <div class="pills" id="pills"></div>
   </div>
@@ -226,11 +214,10 @@ dd a{color:var(--red-deep)}
    ============================================================ */
 const CONFIG = {
   // Pega aquí el link de tu Google Sheets (el de la barra del navegador)
-  SHEET_URL: "https://docs.google.com/spreadsheets/d/1D6f-Bx60XoICoilatq5N7Jkgg6NZVgJJnmrn5lGtkD4/edit?usp=sharing",
+  SHEET_URL: "PEGA_AQUI_TU_LINK_DE_GOOGLE_SHEETS",
   // Nombre exacto de la pestaña (tal como aparece abajo en Google Sheets). Déjalo vacío ("") para usar la pestaña del link.
   SHEET_TAB: "TABLA DE EMBARQUES",
   TITLE: "Embarques",
-  COMPANY: "Provinco.",
   REFRESH_MINUTES: 5,          // se actualiza solo cada X minutos (0 = desactivado)
   SHOW_SIN_STATUS: false,      // true = mostrar en la barra los pedidos con status vacío como "Sin Status"
   DELIVERY_FROM_UPDATE: true,  // "Días para Entregar" = días de embarque a la fecha de la columna Actualización (solo entregados)
@@ -332,14 +319,14 @@ async function load(){
     $("err").classList.remove("on");
     $("updated").textContent = new Date().toLocaleString("es-MX",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
     render();
-    setState("ok","En Vivo!");
+    setState("ok","");
   }catch(e){
     showError("No se pudo leer la hoja",
       "Revisa que la hoja esté compartida como <strong>“Cualquier persona con el enlace” (lector)</strong> y que el nombre de la pestaña en <code>SHEET_TAB</code> sea idéntico al de Google Sheets. Detalle: "+esc(e.message));
     setState("error","Sin conexión");
   }
 }
-function setState(s,t){ $("sticker").className="sticker "+(s==="error"?"error":""); $("stickerText").textContent=t }
+function setState(s,t){ const c=$("conn"); c.hidden = (s==="ok"); c.textContent=t }
 function showError(title,html){ const e=$("err"); e.innerHTML=`<strong>${title}</strong><br>${html}`; e.classList.add("on") }
 
 /* ---------- Estilos y nombres de status ---------- */
@@ -496,7 +483,7 @@ $("dBody").addEventListener("click",e=>{
 });
 
 /* Inicio */
-document.title=CONFIG.TITLE; $("title").textContent=CONFIG.TITLE; $("brand").textContent=CONFIG.COMPANY;
+document.title=CONFIG.TITLE; $("title").textContent=CONFIG.TITLE;
 load();
 if(CONFIG.REFRESH_MINUTES>0) timer=setInterval(load, CONFIG.REFRESH_MINUTES*60000);
 </script>
