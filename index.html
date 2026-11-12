@@ -67,21 +67,20 @@ h1,h2{margin:0}
 /* ---------- Tablas ---------- */
 .warehouse{padding:28px 5vw;background-color:#aeb4bc;
   background-image:url("fondo-almacen.jpg"),linear-gradient(#97a0ab,#cfd3d8);background-size:cover;background-position:center}
-.sheet{max-width:1100px;margin:0 auto;background:rgba(243,243,243,.9);padding:22px 26px 28px}
+.sheet{max-width:1240px;margin:0 auto;background:rgba(243,243,243,.9);padding:22px 26px 28px}
 .sheet.gray{background:#e1e1e1}
 .sheet h2{font-weight:700;font-size:clamp(34px,6vw,60px);line-height:1.1;letter-spacing:-.04em;text-align:center;color:#232327}
 .meta{text-align:center;color:#555;font-size:13px;font-weight:600;margin:6px 0 14px}
 .scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:980px}
-th{font-weight:600;font-size:13px;line-height:1.25;color:var(--ink);padding:12px 10px;text-align:center;cursor:pointer;user-select:none}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{font-weight:600;font-size:13px;line-height:1.25;color:var(--ink);padding:12px 6px;text-align:center;cursor:pointer;user-select:none}
 th .arr{margin-left:4px;color:var(--red-deep)}
-td{padding:13px 10px;text-align:center;font-size:14px;font-variant-numeric:tabular-nums}
-td.nota{max-width:260px}
+td{padding:13px 6px;text-align:center;font-size:14px;line-height:1.35;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 tbody tr{cursor:pointer}
 tbody tr:hover td{background:rgba(255,51,51,.08)}
 .t-lines th,.t-lines td{border-bottom:1px solid var(--rule)}
 .t-grid th,.t-grid td{border:1px solid var(--rule)}
-.spill{display:inline-block;padding:3px 12px;border-radius:999px;background:var(--bg);font-weight:600;font-size:12px;white-space:nowrap}
+.spill{display:inline-block;padding:4px 11px;border-radius:12px;background:var(--bg);font-weight:600;font-size:12px;line-height:1.25;overflow-wrap:normal}
 .dash{color:#888}
 .empty{padding:34px 10px;text-align:center;color:#555}
 .empty strong{display:block;color:var(--ink);font-weight:600;font-size:16px}
@@ -132,6 +131,7 @@ dd{margin:3px 0 0;word-break:break-word}
 dd a{color:var(--red-deep)}
 .copy{margin-left:8px;padding:2px 8px;font-size:12px}
 
+@media (max-width:900px){ table{table-layout:auto;min-width:900px} }
 @media (max-width:820px){
   .kpis{grid-template-columns:1fr 1fr}
   .charts{grid-template-columns:1fr}
@@ -421,8 +421,10 @@ function sortList(list,s){
     return String(a[k]).localeCompare(String(b[k]),"es",{numeric:true})*dir;
   });
 }
+const COL_W = {fechaPedido:9,orden:10,cliente:18,status:12,fechaEmbarque:9,guia:11,nota:16,fletera:9,tiempoRetenido:8,dias:6};
 function drawTable(el,list,cols,s){
-  el.innerHTML = `<thead><tr>`+cols.map(k=>
+  const tot = cols.reduce((a,k)=>a+(COL_W[k]||10),0);
+  el.innerHTML = `<colgroup>`+cols.map(k=>`<col style="width:${((COL_W[k]||10)/tot*100).toFixed(2)}%">`).join("")+`</colgroup><thead><tr>`+cols.map(k=>
     `<th data-k="${k}">${labelOf(k)}${s.k===k?`<span class="arr">${s.dir>0?"↑":"↓"}</span>`:""}</th>`).join("")+`</tr></thead><tbody>`+
     list.map(r=>`<tr data-i="${rows.indexOf(r)}" tabindex="0">`+cols.map(k=>{
       if(k==="status") return `<td>${spill(r.status)}</td>`;
