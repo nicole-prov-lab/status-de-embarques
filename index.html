@@ -72,7 +72,7 @@ h1,h2{margin:0}
 .sheet h2{font-weight:700;font-size:clamp(34px,6vw,60px);line-height:1.1;letter-spacing:-.04em;text-align:center;color:#232327}
 .meta{text-align:center;color:#555;font-size:13px;font-weight:600;margin:6px 0 14px}
 .scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:760px}
+table{width:100%;border-collapse:collapse;min-width:980px}
 th{font-weight:600;font-size:13px;line-height:1.25;color:var(--ink);padding:12px 10px;text-align:center;cursor:pointer;user-select:none}
 th .arr{margin-left:4px;color:var(--red-deep)}
 td{padding:13px 10px;text-align:center;font-size:14px;font-variant-numeric:tabular-nums}
@@ -226,7 +226,7 @@ const CONFIG = {
 
 // Las columnas se leen por POSICIÓN (A a K), no por el nombre del encabezado.
 const COLS = [
-  {k:"fechaPedido",     label:"Fecha de Orden de Compra"},
+  {k:"fechaPedido",     label:"Fecha de Pedido"},
   {k:"pedidoComercial", label:"Pedido en Comercial"},
   {k:"agente",          label:"Agente de Venta"},
   {k:"orden",           label:"Número de Orden"},
@@ -237,10 +237,15 @@ const COLS = [
   {k:"nota",            label:"Nota"},
   {k:"email",           label:"E-mail de contacto"},
   {k:"actualizacion",   label:"Actualización"},
+  {k:"fletera",         label:"Fletera"},            // columna L
+  {k:"tiempoRetenido",  label:"Tiempo Retenido"},    // columna M
 ];
 // Columnas que NO se ven en las tablas (sí en el panel al hacer clic en una fila)
 const HIDDEN_IN_TABLE = ["actualizacion","email","agente","pedidoComercial"];
 const TABLE_COLS = COLS.map(c => c.k).filter(k => !HIDDEN_IN_TABLE.includes(k));
+// Columnas que solo se muestran en los pedidos activos (no en los entregados)
+const ACTIVE_ONLY = ["tiempoRetenido"];
+const DELIVERED_COLS = [...TABLE_COLS.filter(k => !ACTIVE_ONLY.includes(k)), "dias"];
 const labelOf = k => k==="dias" ? "Días" : COLS.find(c=>c.k===k).label;
 
 const $ = id => document.getElementById(id);
@@ -317,7 +322,7 @@ async function load(){
       .map(r => addDays(Object.fromEntries(COLS.map((c,i)=>[c.k,(r[i]||"").trim()]))));
     loaded = true;
     $("err").classList.remove("on");
-    $("updated").textContent = new Date().toLocaleString("es-MX",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+    $("updated").textContent = new Date().toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"});
     render();
     setState("ok","");
   }catch(e){
@@ -332,37 +337,42 @@ function showError(title,html){ const e=$("err"); e.innerHTML=`<strong>${title}<
 /* ---------- Estilos y nombres de status ---------- */
 function statusStyle(s){
   if(!s) return {bar:"#030303",bg:"#9f9f9f"};
-  if(/entreg|recib|complet|cerrad/i.test(s)) return {bar:"#abd551",bg:"#e7edc0"};
-  if(/embarc|tr[aá]nsito|enviad|ruta|despach|aduana/i.test(s)) return {bar:"#336f99",bg:"#b7c9db"};
-  if(/retras|cancel|problem|detenid|incidenc|rechaz/i.test(s)) return {bar:"#cf0303",bg:"#f1c3c3"};
-  if(/pendient|producci|prepar|espera|program|proceso|document/i.test(s)) return {bar:"#f0a830",bg:"#f8e0b4"};
+  if(/entreg|recib|complet|cerrad/i.test(s)) return {bar:"#abd551",bg:"#e7edc0"};          // verde
+  if(/retenid|retras|cancel|problem|detenid|incidenc|rechaz/i.test(s)) return {bar:"#cf0303",bg:"#f1c3c3"};  // rojo
+  if(/documentaci/i.test(s)) return {bar:"#7b3fa0",bg:"#dcc9ea"};                           // morado
+  if(/por\s+embarc/i.test(s)) return {bar:"#f57c00",bg:"#fbd2a6"};                          // naranja (antes que "embarc")
+  if(/embarc|tr[aá]nsito|enviad|ruta|despach|aduana/i.test(s)) return {bar:"#336f99",bg:"#b7c9db"};          // azul
+  if(/pendient|producci|prepar|espera|program|proceso/i.test(s)) return {bar:"#f0a830",bg:"#f8e0b4"};       // ámbar
   return {bar:"#6b7480",bg:"#d5d9de"};
 }
 function statusLabel(s){
-  if(/entreg/i.test(s)) return "Entregados";
-  if(/embarc/i.test(s)) return "Embarcados";
-  return s.toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase());
+  if(/^\s*entregad/i.test(s)) return "Entregados";
+  if(/^\s*embarcad/i.test(s)) return "Embarcados";
+  return s.trim().toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase());
 }
 function spill(s){ if(!s) return '<span class="dash">—</span>'; const st=statusStyle(s); return `<span class="spill" style="--bg:${st.bg}">${esc(s)}</span>` }
 
-/* ---------- Resumen superior ---------- */
+/* ---------- Resumen superior (solo activos: los entregados no cuentan) ---------- */
 function renderSummary(){
-  $("total").textContent = rows.length;
+  const act = rows.filter(r=>!isDelivered(r));
+  $("total").textContent = act.length;
   const groups = {}; let none = 0;
-  rows.forEach(r=>{ if(r.status){ const k=norm(r.status); (groups[k]=groups[k]||{name:r.status,n:0}).n++ } else none++ });
-  const rank = g => /entreg/i.test(g.name)?0 : /embarc/i.test(g.name)?1 : g.sin?3 : 2;
+  act.forEach(r=>{ if(r.status){ const k=norm(r.status); (groups[k]=groups[k]||{name:r.status,n:0}).n++ } else none++ });
+  const rank = g => g.sin ? 3 : /^\s*embarcad/i.test(g.name) ? 0 : 2;
   const list = Object.entries(groups).map(([k,g])=>({key:k,name:g.name,n:g.n}));
   if(CONFIG.SHOW_SIN_STATUS && none) list.push({key:"__sin__",name:"",n:none,sin:true});
   list.sort((a,b)=>rank(a)-rank(b) || b.n-a.n);
   const label = g => g.sin ? "Sin Status" : statusLabel(g.name);
   $("meter").innerHTML = list.map(g=>
     `<button class="seg" data-s="${esc(g.key)}" title="${esc(label(g))}: ${g.n}" aria-label="${esc(label(g))}: ${g.n}" style="flex:${g.n} 1 0;background:${statusStyle(g.name).bar}"></button>`).join("");
+  const nd = rows.filter(isDelivered).length, ds = statusStyle("Entregado");
   $("pills").innerHTML = list.map(g=>{
     const st=statusStyle(g.name);
-    return `<button class="pill" data-s="${esc(g.key)}" aria-pressed="${state.status===g.key}" style="--bg:${st.bg};--dot:${st.bar}"><i></i><b>${g.n}</b> ${esc(label(g))}</button>`}).join("");
+    return `<button class="pill" data-s="${esc(g.key)}" aria-pressed="${state.status===g.key}" style="--bg:${st.bg};--dot:${st.bar}"><i></i><b>${g.n}</b> ${esc(label(g))}</button>`}).join("") +
+    (nd ? `<button class="pill" data-s="__entregados__" style="--bg:${ds.bg};--dot:${ds.bar}"><i></i><b>${nd}</b> Entregados</button>` : "");
 }
 function onSummaryClick(key){
-  if(key!=="__sin__" && /entreg/i.test(key)){ $("entregados").scrollIntoView(); return }
+  if(key==="__entregados__"){ $("entregados").scrollIntoView(); return }   // atajo a la sección de entregados
   state.status = state.status===key ? "" : key;
   render();
   $("pendientes").scrollIntoView();
@@ -434,7 +444,7 @@ function render(){
   const pl = sortList(pend.filter(r=>match(r)&&stMatch(r)), sortP);
   const dl = sortList(dels.filter(match), sortD);
   drawTable($("tblP"), pl, TABLE_COLS, sortP);
-  drawTable($("tblD"), dl, [...TABLE_COLS,"dias"], sortD);
+  drawTable($("tblD"), dl, DELIVERED_COLS, sortD);
   $("pCount").textContent = `${pl.length} de ${pend.length} pedidos pendientes`;
   $("dCount").textContent = `${dl.length} de ${dels.length} pedidos entregados`;
   $("pEmpty").hidden = pl.length>0; $("dEmpty").hidden = dl.length>0;
@@ -451,7 +461,7 @@ function render(){
 function openDrawer(i){
   const r=rows[i]; if(!r) return;
   $("dTitle").textContent=r.cliente||"Pedido"; $("dOrder").textContent=r.orden?("Orden "+r.orden):"";
-  const items = COLS.map(c=>{
+  const items = COLS.filter(c=>!(isDelivered(r) && ACTIVE_ONLY.includes(c.k))).map(c=>{
     const v=r[c.k]; let inner=v?esc(v):'<span class="dash">—</span>';
     if(c.k==="status") inner=spill(v);
     if(c.k==="email"&&v) inner=`<a href="mailto:${esc(v)}">${esc(v)}</a>`;
