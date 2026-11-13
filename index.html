@@ -110,6 +110,9 @@ tbody tr:hover td{background:rgba(255,51,51,.08)}
 .track i{display:block;height:100%;background:var(--red-deep)}
 .hc{font-weight:700;text-align:right}
 .nodata{color:#555;padding:24px 0}
+.rlist .hrow{grid-template-columns:minmax(110px,170px) 1fr 54px;cursor:pointer}
+.rlist .hrow:hover .hl{text-decoration:underline}
+.hl small{display:block;font-weight:500;color:#666;font-size:11px}
 .gridband{background:var(--charcoal);padding:30px 5vw 50px}
 
 /* ---------- Panel de detalle ---------- */
@@ -176,6 +179,24 @@ dd a{color:var(--red-deep)}
   </div>
 </section>
 
+<section class="blackband" id="retenidos"><h2>Tiempo Retenido</h2></section>
+
+<section class="delivered" aria-label="Estadísticas de pedidos retenidos">
+  <div class="kpis" id="retKpis"></div>
+  <div class="charts">
+    <div class="panel">
+      <h3>Retenidos ahora</h3>
+      <p class="note" id="retNowNote">Días que lleva cada pedido retenido, del que más tiempo lleva al que menos.</p>
+      <div class="rlist" id="retNow"></div>
+    </div>
+    <div class="panel">
+      <h3>¿Cuánto tiempo se quedan retenidos?</h3>
+      <p class="note">Número de pedidos por rango de días. Incluye los que siguen retenidos.</p>
+      <div id="retDist"></div>
+    </div>
+  </div>
+</section>
+
 <section class="blackband" id="entregados"><h2>Pedidos Entregados</h2></section>
 
 <section class="delivered">
@@ -218,7 +239,7 @@ const CONFIG = {
   // Nombre exacto de la pestaña (tal como aparece abajo en Google Sheets). Déjalo vacío ("") para usar la pestaña del link.
   SHEET_TAB: "TABLA DE EMBARQUES",
   TITLE: "Embarques",
-  REFRESH_MINUTES: 5,          // se actualiza solo cada X minutos (0 = desactivado)
+  REFRESH_MINUTES: 2,          // se actualiza solo cada X minutos (0 = desactivado)
   SHOW_SIN_STATUS: false,      // true = mostrar en la barra los pedidos con status vacío como "Sin Status"
   DELIVERY_FROM_UPDATE: true,  // "Días para Entregar" = días de embarque a la fecha de la columna Actualización (solo entregados)
 };
@@ -296,7 +317,12 @@ function toTime(s){
   const t = Date.parse(s); return isNaN(t)?0:t;
 }
 const DATE_KEYS = ["fechaPedido","fechaEmbarque","actualizacion"];
+function parseDays(v){          // "2.5", "2.5 días", "2,5 días" -> 2.5
+  const m = String(v||"").replace(",",".").match(/-?\d+(?:\.\d+)?/);
+  return m ? parseFloat(m[0]) : null;
+}
 function addDays(r){            // días desde la fecha de pedido hasta la fecha de embarque
+  r.ret = parseDays(r.tiempoRetenido);   // días retenido (columna M)
   const a=toTime(r.fechaPedido), b=toTime(r.fechaEmbarque);
   r.dias = (a && b && b>=a) ? Math.round((b-a)/DAY) : null;
   return r;
@@ -412,6 +438,38 @@ function renderDelivered(dels){
     `<div class="hrow"><span class="hl">${b[2]}</span><span class="track"><i style="width:${counts[i]/mc*100}%"></i></span><span class="hc">${counts[i]}</span></div>`).join("");
 }
 
+/* ---------- Estadísticas de tiempo retenido ---------- */
+function renderRetained(){
+  const isRet = r => !isDelivered(r) && /retenid/i.test(r.status);
+  const now  = rows.filter(isRet).sort((a,b)=>(b.ret ?? -1)-(a.ret ?? -1));
+  const hist = rows.filter(r=>r.ret!=null && r.ret>0);          // todos los que han estado retenidos
+  const done = hist.filter(r=>!isRet(r));                       // ya liberados (tiempo congelado)
+  const avg  = done.length ? done.reduce((a,r)=>a+r.ret,0)/done.length : null;
+  const top  = hist.length ? hist.reduce((m,r)=>r.ret>m.ret?r:m) : null;
+  const kpi=(n,l)=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`;
+  $("retKpis").innerHTML = kpi(now.length,"Retenidos ahora") +
+    kpi(avg==null?"—":avg.toFixed(1),"Promedio de días retenido") +
+    kpi(top?top.ret.toFixed(1):"—","Días de la retención más larga") +
+    kpi(done.length,"Pedidos liberados tras retención");
+
+  // Lista: retenidos ahora
+  const mx = Math.max(...now.map(r=>r.ret||0), 0.1);
+  $("retNow").innerHTML = now.length
+    ? now.slice(0,10).map(r=>`<div class="hrow" data-i="${rows.indexOf(r)}"><span class="hl">${esc(r.cliente||r.orden)}<small>${esc(r.orden)}</small></span>`+
+        `<span class="track"><i style="width:${((r.ret||0)/mx*100).toFixed(1)}%"></i></span><span class="hc">${r.ret==null?"—":r.ret.toFixed(1)}</span></div>`).join("")
+    : `<div class="nodata">No hay pedidos retenidos en este momento.</div>`;
+  $("retNowNote").textContent = now.length>10
+    ? `Días que lleva cada pedido retenido. Se muestran los 10 que más llevan, de ${now.length}.`
+    : "Días que lleva cada pedido retenido, del que más tiempo lleva al que menos.";
+
+  // Distribución por rangos
+  if(!hist.length){ $("retDist").innerHTML = `<div class="nodata">Todavía no hay tiempos registrados en la columna Tiempo Retenido.</div>`; return }
+  const B=[[0,1,"Menos de 1 día"],[1,4,"1 a 3 días"],[4,8,"4 a 7 días"],[8,15,"8 a 14 días"],[15,Infinity,"15 días o más"]];
+  const counts=B.map(([a,b])=>hist.filter(r=>r.ret>=a&&r.ret<b).length), mc=Math.max(...counts,1);
+  $("retDist").innerHTML = B.map((b,i)=>
+    `<div class="hrow"><span class="hl">${b[2]}</span><span class="track"><i style="width:${counts[i]/mc*100}%"></i></span><span class="hc">${counts[i]}</span></div>`).join("");
+}
+
 /* ---------- Tablas ---------- */
 function sortList(list,s){
   const {k,dir}=s;
@@ -442,6 +500,7 @@ function render(){
 
   renderSummary();
   renderDelivered(dels);
+  renderRetained();
 
   const pl = sortList(pend.filter(r=>match(r)&&stMatch(r)), sortP);
   const dl = sortList(dels.filter(match), sortD);
@@ -487,6 +546,7 @@ $("pills").addEventListener("click",e=>{const b=e.target.closest("[data-s]"); if
 $("tblP").addEventListener("click",e=>{ const th=e.target.closest("th"); if(th){ sortP = sortP.k===th.dataset.k ? {k:sortP.k,dir:-sortP.dir} : {k:th.dataset.k,dir:1}; render(); return } const tr=e.target.closest("tr[data-i]"); if(tr) openDrawer(+tr.dataset.i) });
 $("tblD").addEventListener("click",e=>{ const th=e.target.closest("th"); if(th){ sortD = sortD.k===th.dataset.k ? {k:sortD.k,dir:-sortD.dir} : {k:th.dataset.k,dir:1}; render(); return } const tr=e.target.closest("tr[data-i]"); if(tr) openDrawer(+tr.dataset.i) });
 [$("tblP"),$("tblD")].forEach(t=>t.addEventListener("keydown",e=>{ if(e.key==="Enter"){const tr=e.target.closest("tr[data-i]"); if(tr) openDrawer(+tr.dataset.i)} }));
+$("retNow").addEventListener("click",e=>{ const h=e.target.closest("[data-i]"); if(h) openDrawer(+h.dataset.i) });
 $("dClose").addEventListener("click",closeDrawer); $("scrim").addEventListener("click",closeDrawer);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeDrawer() });
 $("dBody").addEventListener("click",e=>{
