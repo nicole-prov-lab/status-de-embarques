@@ -21,22 +21,18 @@ button,input{font-family:inherit;font-weight:500;color:inherit}
 :focus-visible{outline:3px solid var(--red);outline-offset:2px}
 h1,h2{margin:0}
 
-/* ---------- Banner (imagen de Canva + datos en vivo encima) ---------- */
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .banner{position:relative;container-type:inline-size;background:#fff;line-height:0}
 .banner-img{display:block;width:100%;height:auto;min-height:60px;background:#20242b;color:#fff;font:500 14px/1.4 var(--font)}
 .ov{position:absolute;line-height:1;white-space:nowrap;color:var(--red)}
-/* "29": a la izquierda de "Pedidos Activos", misma línea base */
 .ov-total{left:0;width:14.64%;text-align:right;font-weight:700;
   font-size:6.557vw;font-size:6.557cqw;top:calc(89.83% - .875em)}
-/* fecha: justo después de "Última Actualización:" */
 .ov-updated{left:13.58%;font-weight:500;
   font-size:1.288vw;font-size:max(1.288cqw,9px);top:calc(73.95% - .875em)}
 .linkbtn{background:none;border:0;padding:0;margin-left:.9em;color:var(--red);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;line-height:1}
 .conn{position:absolute;left:84.9%;width:12.3%;top:93.4%;text-align:center;line-height:1.2;
   font-weight:600;font-size:max(1.2cqw,10px);color:var(--red)}
 
-/* ---------- Resumen ---------- */
 .summary{background:#fff;padding:0 5vw 30px}
 .sum-in{max-width:1000px;margin:0 auto}
 .meter{display:flex;height:22px;border-radius:999px;overflow:hidden;background:#e6e6e6;margin:6px 0 18px}
@@ -52,7 +48,6 @@ h1,h2{margin:0}
 .error-box.on{display:block}
 .error-box strong{font-weight:600}
 
-/* ---------- Búsqueda ---------- */
 .searchband{background:var(--charcoal);padding:26px 5vw 22px}
 .search{display:flex;align-items:center;gap:10px;max-width:560px;margin:0 auto;height:46px;padding:0 14px 0 18px;
   background:var(--search);border-radius:999px;color:#fff}
@@ -64,7 +59,6 @@ h1,h2{margin:0}
 .fnote{color:#fff;font-size:13px;text-align:center;margin-top:12px;font-weight:600}
 .fnote button{background:none;border:0;color:#fff;text-decoration:underline;cursor:pointer;font-weight:600;font-size:13px;margin-left:6px}
 
-/* ---------- Tablas ---------- */
 .warehouse{padding:28px 5vw;background-color:#aeb4bc;
   background-image:url("fondo-almacen.jpg"),linear-gradient(#97a0ab,#cfd3d8);background-size:cover;background-position:center}
 .sheet{max-width:1240px;margin:0 auto;background:rgba(243,243,243,.9);padding:22px 26px 28px}
@@ -85,7 +79,6 @@ tbody tr:hover td{background:rgba(255,51,51,.08)}
 .empty{padding:34px 10px;text-align:center;color:#555}
 .empty strong{display:block;color:var(--ink);font-weight:600;font-size:16px}
 
-/* ---------- Entregados ---------- */
 .blackband{background:var(--black);padding:18px 5vw 20px}
 .blackband h2{color:#fff;font-weight:700;font-size:clamp(34px,6vw,60px);letter-spacing:-.04em;text-align:center;line-height:1.1}
 .delivered{padding:34px 5vw 40px}
@@ -117,7 +110,6 @@ tbody tr:hover td{background:rgba(255,51,51,.08)}
 .hl small{display:block;font-weight:500;color:#666;font-size:11px}
 .gridband{background:var(--charcoal);padding:30px 5vw 50px}
 
-/* ---------- Panel de detalle ---------- */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
 .scrim.on{opacity:1;pointer-events:auto}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);z-index:21;background:#fff;border-left:6px solid var(--red);
@@ -193,7 +185,7 @@ dd a{color:var(--red-deep)}
     </div>
     <div class="panel">
       <h3>¿Cuánto tiempo se quedan retenidos?</h3>
-      <p class="note">Número de pedidos por rango de días. Incluye los que siguen retenidos.</p>
+      <p class="note">Número de pedidos por días. Incluye los que siguen actualmente retenidos.</p>
       <div id="retDist"></div>
     </div>
   </div>
@@ -206,12 +198,12 @@ dd a{color:var(--red-deep)}
   <div class="charts">
     <div class="panel">
       <h3>Promedio de días por mes</h3>
-      <p class="note" id="monthNote">Días entre la fecha de pedido y la de embarque, por mes de embarque.</p>
+      <p class="note" id="monthNote">Días entre la fecha incial del pedido y la de embarque, por mes de embarque.</p>
       <div id="chartMonth"></div>
     </div>
     <div class="panel">
-      <h3>¿Cuántos días tardamos?</h3>
-      <p class="note">Número de embarques por rango de días.</p>
+      <h3>¿Cuántos días tardamos en embarcar desde que se crea la orden de compra?</h3>
+      <p class="note">Número de pedidos embarcados por rango de días.</p>
       <div id="chartDist"></div>
     </div>
   </div>
@@ -232,22 +224,16 @@ dd a{color:var(--red-deep)}
 </aside>
 
 <script>
-/* ============================================================
-   CONFIGURACIÓN: solo cambia esto
-   ============================================================ */
+
 const CONFIG = {
-  // Pega aquí el link de tu Google Sheets (el de la barra del navegador)
   SHEET_URL: "https://docs.google.com/spreadsheets/d/1D6f-Bx60XoICoilatq5N7Jkgg6NZVgJJnmrn5lGtkD4/edit?usp=sharing",
-  // Nombre exacto de la pestaña (tal como aparece abajo en Google Sheets). Déjalo vacío ("") para usar la pestaña del link.
   SHEET_TAB: "TABLA DE EMBARQUES",
   TITLE: "Embarques",
-  REFRESH_MINUTES: 5,          // se actualiza solo cada X minutos (0 = desactivado)
-  SHOW_SIN_STATUS: false,      // true = mostrar en la barra los pedidos con status vacío como "Sin Status"
-  DELIVERY_FROM_UPDATE: true,  // "Días para Entregar" = días de embarque a la fecha de la columna Actualización (solo entregados)
+  REFRESH_MINUTES: 2,          
+  SHOW_SIN_STATUS: false,     
+  DELIVERY_FROM_UPDATE: true, 
 };
-/* ============================================================ */
 
-// Las columnas se leen por POSICIÓN (A a K), no por el nombre del encabezado.
 const COLS = [
   {k:"fechaPedido",     label:"Fecha de Orden de Compra"},
   {k:"pedidoComercial", label:"Pedido en Comercial"},
@@ -263,10 +249,8 @@ const COLS = [
   {k:"fletera",         label:"Fletera"},            // columna L
   {k:"tiempoRetenido",  label:"Tiempo Retenido"},    // columna M
 ];
-// Columnas que NO se ven en las tablas (sí en el panel al hacer clic en una fila)
 const HIDDEN_IN_TABLE = ["actualizacion","email","agente","pedidoComercial"];
 const TABLE_COLS = COLS.map(c => c.k).filter(k => !HIDDEN_IN_TABLE.includes(k));
-// Columnas que solo se muestran en los pedidos activos (no en los entregados)
 const ACTIVE_ONLY = ["tiempoRetenido"];
 const DELIVERED_COLS = [...TABLE_COLS.filter(k => !ACTIVE_ONLY.includes(k)), "dias"];
 const labelOf = k => k==="dias" ? "Días" : COLS.find(c=>c.k===k).label;
@@ -280,7 +264,6 @@ let rows = [], loaded = false, timer = null;
 let sortP = {k:"fechaPedido", dir:-1}, sortD = {k:"fechaEmbarque", dir:-1};
 const state = {q:"", status:""};
 
-/* ---------- Link de Google Sheets -> URL CSV ---------- */
 function csvUrl(link){
   if(!link || link.includes("PEGA_AQUI")) return null;
   if(/output=csv/.test(link) || /\/pub\?/.test(link)) return link.includes("output=csv") ? link : link + (link.includes("?")?"&":"?") + "output=csv";
@@ -292,7 +275,6 @@ function csvUrl(link){
   return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&${which}`;
 }
 
-/* ---------- Parser CSV (maneja comillas y saltos de línea) ---------- */
 function parseCSV(text){
   const out=[]; let row=[], f="", q=false;
   for(let i=0;i<text.length;i++){
@@ -309,7 +291,6 @@ function parseCSV(text){
   return out;
 }
 
-/* ---------- Fechas y días ---------- */
 function toTime(s){
   if(!s) return 0;
   let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
@@ -319,21 +300,21 @@ function toTime(s){
   const t = Date.parse(s); return isNaN(t)?0:t;
 }
 const DATE_KEYS = ["fechaPedido","fechaEmbarque","actualizacion"];
-function parseDays(v){          // "1 día y 2 hrs", "5 hrs", "3 días" -> días (decimal)
+function parseDays(v){       
   const t = String(v||"").toLowerCase().replace(",",".");
   const d = t.match(/(\d+(?:\.\d+)?)\s*d[ií]a/);
   const h = t.match(/(\d+(?:\.\d+)?)\s*(?:hrs?|horas?|h\b)/);
   if(d || h) return (d?parseFloat(d[1]):0) + (h?parseFloat(h[1])/24:0);
-  const m = t.match(/-?\d+(?:\.\d+)?/);     // un número suelto se toma como días
+  const m = t.match(/-?\d+(?:\.\d+)?/);     
   return m ? parseFloat(m[0]) : null;
 }
-function fmtDur(days){          // 0.0833 -> "2 hrs" | 1.0833 -> "1 día y 2 hrs"
+function fmtDur(days){         
   const h = Math.floor(days*24 + 0.001), d = Math.floor(h/24), hr = h % 24;
   const th = hr + (hr===1 ? " hr" : " hrs"), td = d + (d===1 ? " día" : " días");
   return d===0 ? th : (hr===0 ? td : td+" y "+th);
 }
-function addDays(r){            // días desde la fecha de pedido hasta la fecha de embarque
-  r.ret = parseDays(r.tiempoRetenido);   // días retenido (columna M)
+function addDays(r){          
+  r.ret = parseDays(r.tiempoRetenido);   
   const a=toTime(r.fechaPedido), b=toTime(r.fechaEmbarque);
   r.dias = (a && b && b>=a) ? Math.round((b-a)/DAY) : null;
   return r;
@@ -341,7 +322,7 @@ function addDays(r){            // días desde la fecha de pedido hasta la fecha
 const isDelivered = r => /entreg/i.test(r.status);
 const norm = s => String(s||"").trim().toLowerCase();
 
-/* ---------- Carga ---------- */
+
 async function load(){
   setState("loading","Actualizando…");
   const url = csvUrl(CONFIG.SHEET_URL);
@@ -353,9 +334,9 @@ async function load(){
     if(text.trim().startsWith("<")) throw new Error("La hoja no es pública");
     const all = parseCSV(text);
     const isHeader = r => /n[uú]mero de orden/i.test(r[3]||"") || /fecha de pedido/i.test(r[0]||"");
-    const h = all.findIndex(isHeader);              // la hoja trae título arriba: busca la fila de encabezados
+    const h = all.findIndex(isHeader);            
     rows = all.slice(h >= 0 ? h+1 : 1)
-      .filter(r => !isHeader(r) && ((r[3]||"").trim() || (r[4]||"").trim()))   // solo filas con orden o cliente
+      .filter(r => !isHeader(r) && ((r[3]||"").trim() || (r[4]||"").trim()))  
       .map(r => addDays(Object.fromEntries(COLS.map((c,i)=>[c.k,(r[i]||"").trim()]))));
     loaded = true;
     $("err").classList.remove("on");
@@ -371,15 +352,14 @@ async function load(){
 function setState(s,t){ const c=$("conn"); c.hidden = (s==="ok"); c.textContent=t }
 function showError(title,html){ const e=$("err"); e.innerHTML=`<strong>${title}</strong><br>${html}`; e.classList.add("on") }
 
-/* ---------- Estilos y nombres de status ---------- */
 function statusStyle(s){
   if(!s) return {bar:"#030303",bg:"#9f9f9f"};
   if(/entreg|recib|complet|cerrad/i.test(s)) return {bar:"#abd551",bg:"#e7edc0"};          // verde
   if(/retenid|retras|cancel|problem|detenid|incidenc|rechaz/i.test(s)) return {bar:"#cf0303",bg:"#f1c3c3"};  // rojo
   if(/documentaci/i.test(s)) return {bar:"#7b3fa0",bg:"#dcc9ea"};                           // morado
-  if(/por\s+embarc/i.test(s)) return {bar:"#f57c00",bg:"#fbd2a6"};                          // naranja (antes que "embarc")
+  if(/por\s+embarc/i.test(s)) return {bar:"#f57c00",bg:"#fbd2a6"};                          // naranja
   if(/embarc|tr[aá]nsito|enviad|ruta|despach|aduana/i.test(s)) return {bar:"#336f99",bg:"#b7c9db"};          // azul
-  if(/pendient|producci|prepar|espera|program|proceso/i.test(s)) return {bar:"#f0a830",bg:"#f8e0b4"};       // ámbar
+  if(/pendient|producci|prepar|espera|program|proceso/i.test(s)) return {bar:"#f0a830",bg:"#f8e0b4"};       // ámbar o cafe?
   return {bar:"#6b7480",bg:"#d5d9de"};
 }
 function statusLabel(s){
@@ -389,7 +369,6 @@ function statusLabel(s){
 }
 function spill(s){ if(!s) return '<span class="dash">—</span>'; const st=statusStyle(s); return `<span class="spill" style="--bg:${st.bg}">${esc(s)}</span>` }
 
-/* ---------- Resumen superior (solo activos: los entregados no cuentan) ---------- */
 function renderSummary(){
   const act = rows.filter(r=>!isDelivered(r));
   $("total").textContent = act.length;
@@ -409,13 +388,12 @@ function renderSummary(){
     (nd ? `<button class="pill" data-s="__entregados__" style="--bg:${ds.bg};--dot:${ds.bar}"><i></i><b>${nd}</b> Entregados</button>` : "");
 }
 function onSummaryClick(key){
-  if(key==="__entregados__"){ $("entregados").scrollIntoView(); return }   // atajo a la sección de entregados
+  if(key==="__entregados__"){ $("entregados").scrollIntoView(); return }   
   state.status = state.status===key ? "" : key;
   render();
   $("pendientes").scrollIntoView();
 }
 
-/* ---------- Entregados: KPIs y gráficas ---------- */
 function renderDelivered(dels){
   const w = dels.filter(r=>r.dias!=null);
   const avg = w.length ? w.reduce((a,r)=>a+r.dias,0)/w.length : null;
@@ -449,7 +427,6 @@ function renderDelivered(dels){
     `<div class="hrow"><span class="hl">${b[2]}</span><span class="track"><i style="width:${counts[i]/mc*100}%"></i></span><span class="hc">${counts[i]}</span></div>`).join("");
 }
 
-/* ---------- Estadísticas de tiempo retenido ---------- */
 function renderRetained(){
   const isRet = r => !isDelivered(r) && /retenid/i.test(r.status);
   const now  = rows.filter(isRet).sort((a,b)=>(b.ret ?? -1)-(a.ret ?? -1));
@@ -458,13 +435,12 @@ function renderRetained(){
   const avg  = done.length ? done.reduce((a,r)=>a+r.ret,0)/done.length : null;
   const top  = hist.length ? hist.reduce((m,r)=>r.ret>m.ret?r:m) : null;
   const kpi=(n,l)=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`;
-  const kt=(n,l)=>`<div class="kpi"><b class="sm">${n}</b><span>${l}</span></div>`;   // versión para textos largos
+  const kt=(n,l)=>`<div class="kpi"><b class="sm">${n}</b><span>${l}</span></div>`;   
   $("retKpis").innerHTML = kpi(now.length,"Retenidos ahora") +
     kt(avg==null?"—":fmtDur(avg),"Promedio Retenido") +
     kt(top?fmtDur(top.ret):"—","Retención más larga") +
     kpi(done.length,"Pedidos liberados tras retención");
 
-  // Lista: retenidos ahora
   const mx = Math.max(...now.map(r=>r.ret||0), 0.1);
   $("retNow").innerHTML = now.length
     ? now.slice(0,10).map(r=>`<div class="hrow" data-i="${rows.indexOf(r)}"><span class="hl">${esc(r.cliente||r.orden)}<small>${esc(r.orden)}</small></span>`+
@@ -474,7 +450,6 @@ function renderRetained(){
     ? `Tiempo que lleva cada pedido retenido. Se muestran los 10 que más llevan, de ${now.length}.`
     : "Tiempo que lleva cada pedido retenido, del que más tiempo lleva al que menos.";
 
-  // Distribución por rangos
   if(!hist.length){ $("retDist").innerHTML = `<div class="nodata">Todavía no hay tiempos registrados en la columna Tiempo Retenido.</div>`; return }
   const B=[[0,1,"Menos de 1 día"],[1,4,"1 a 3 días"],[4,8,"4 a 7 días"],[8,15,"8 a 14 días"],[15,Infinity,"15 días o más"]];
   const counts=B.map(([a,b])=>hist.filter(r=>r.ret>=a&&r.ret<b).length), mc=Math.max(...counts,1);
@@ -482,7 +457,6 @@ function renderRetained(){
     `<div class="hrow"><span class="hl">${b[2]}</span><span class="track"><i style="width:${counts[i]/mc*100}%"></i></span><span class="hc">${counts[i]}</span></div>`).join("");
 }
 
-/* ---------- Tablas ---------- */
 function sortList(list,s){
   const {k,dir}=s;
   return list.slice().sort((a,b)=>{
@@ -530,7 +504,6 @@ function render(){
   $("clearQ").hidden = !state.q;
 }
 
-/* ---------- Detalle (orden A a K) ---------- */
 function openDrawer(i){
   const r=rows[i]; if(!r) return;
   $("dTitle").textContent=r.cliente||"Pedido"; $("dOrder").textContent=r.orden?("Orden "+r.orden):"";
@@ -548,7 +521,6 @@ function openDrawer(i){
 }
 function closeDrawer(){ $("drawer").classList.remove("on"); $("scrim").classList.remove("on"); $("drawer").setAttribute("aria-hidden","true") }
 
-/* ---------- Eventos ---------- */
 $("q").addEventListener("input",e=>{state.q=e.target.value;render()});
 $("clearQ").addEventListener("click",()=>{state.q="";$("q").value="";render();$("q").focus()});
 $("refresh").addEventListener("click",load);
@@ -566,7 +538,7 @@ $("dBody").addEventListener("click",e=>{
   navigator.clipboard?.writeText(b.dataset.copy).then(()=>{b.textContent="Copiado"; setTimeout(()=>b.textContent="Copiar",1500)});
 });
 
-/* Inicio */
+
 document.title=CONFIG.TITLE; $("title").textContent=CONFIG.TITLE;
 load();
 if(CONFIG.REFRESH_MINUTES>0) timer=setInterval(load, CONFIG.REFRESH_MINUTES*60000);
